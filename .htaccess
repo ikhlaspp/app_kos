@@ -1,0 +1,14 @@
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteBase /app_kos/
+
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)/$ $1 [L,R=301]
+
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ index.php?route=$1 [L,QSA]
+</IfModule>
+
