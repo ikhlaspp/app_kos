@@ -11,7 +11,7 @@
             <?php foreach ($daftar_kos as $item_kos): ?>
                 <div class="kos-item" style="border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; background-color: #ffffff; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transition: box-shadow 0.3s ease;">
                     <?php if (!empty($item_kos['gambar_utama'])): ?>
-                        <img src="<?php echo htmlspecialchars($appConfig['BASE_URL'] . ($item_kos['gambar_utama'])); ?>" 
+                        <img src="<?php echo htmlspecialchars($appConfig['UPLOADS_URL_PATH'] . ($item_kos['gambar_utama'])); ?>" 
                              alt="Gambar <?php echo htmlspecialchars($item_kos['nama_kos']); ?>" 
                              style="width: 100%; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 15px;">
                     <?php else: ?>

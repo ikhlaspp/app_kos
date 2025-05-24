@@ -199,5 +199,54 @@ class KosModel {
         $stmt->bindParam(':id', $kosId, PDO::PARAM_INT);
         return $stmt->execute();
     }
+
+    /**
+     * Menambahkan data gambar baru untuk sebuah kos.
+     * @param int $kos_id ID dari kos.
+     * @param string $nama_file Nama file asli atau nama unik yang disimpan.
+     * @param string $path Path relatif tempat file disimpan (misal: 'kos_images/namaunik.jpg').
+     * @return string|false ID gambar baru jika berhasil, false jika gagal.
+     */
+    public function addGambarKos(int $kos_id, string $nama_file, string $path): ?string {
+        $sql = "INSERT INTO gambar_kos (kos_id, nama_file, path) VALUES (:kos_id, :nama_file, :path)";
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':kos_id', $kos_id, PDO::PARAM_INT);
+            $stmt->bindParam(':nama_file', $nama_file);
+            $stmt->bindParam(':path', $path);
+            if ($stmt->execute()) {
+                return $this->pdo->lastInsertId();
+            }
+            return null;
+        } catch (PDOException $e) {
+            error_log("KosModel::addGambarKos Error: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Menghapus data gambar kos dari database berdasarkan ID gambar.
+     * @param int $gambar_id ID gambar yang akan dihapus.
+     * @return array|null Mengembalikan data gambar yang dihapus (termasuk path) jika berhasil, null jika gagal.
+     */
+    public function deleteGambarKosById(int $gambar_id): ?array {
+        // Ambil dulu path file untuk dihapus dari server
+        $sqlGet = "SELECT id, kos_id, nama_file, path FROM gambar_kos WHERE id = :id";
+        $stmtGet = $this->pdo->prepare($sqlGet);
+        $stmtGet->bindParam(':id', $gambar_id, PDO::PARAM_INT);
+        $stmtGet->execute();
+        $gambarData = $stmtGet->fetch(PDO::FETCH_ASSOC);
+
+        if ($gambarData) {
+            $sqlDelete = "DELETE FROM gambar_kos WHERE id = :id";
+            $stmtDelete = $this->pdo->prepare($sqlDelete);
+            $stmtDelete->bindParam(':id', $gambar_id, PDO::PARAM_INT);
+            if ($stmtDelete->execute() && $stmtDelete->rowCount() > 0) {
+                return $gambarData; // Kembalikan data gambar agar path filenya bisa dihapus dari server
+            }
+        }
+        error_log("KosModel::deleteGambarKosById: Gagal menghapus gambar ID {$gambar_id} dari DB atau gambar tidak ditemukan.");
+        return null;
+    }
 }
 ?>

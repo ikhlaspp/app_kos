@@ -12,7 +12,7 @@
         <?php if (!empty($kos['gambar_kos']) && is_array($kos['gambar_kos'])): ?>
             <div class="kos-gallery" style="margin-bottom: 20px;">
                 <?php foreach ($kos['gambar_kos'] as $gambar): ?>
-                    <img src="<?php echo htmlspecialchars($appConfig['BASE_URL'] . $gambar['path']); // Asumsi path adalah relatif dari BASE_URL atau path absolut sudah benar ?>" 
+                    <img src="<?php echo htmlspecialchars($appConfig['UPLOADS_URL_PATH'] . $gambar['path']); // Asumsi path adalah relatif dari BASE_URL atau path absolut sudah benar ?>" 
                          alt="<?php echo htmlspecialchars($gambar['nama_file']); ?>" 
                          style="max-width: 200px; height: auto; border-radius: 4px; margin-right: 10px; margin-bottom:10px; border: 1px solid #eee;">
                 <?php endforeach; ?>

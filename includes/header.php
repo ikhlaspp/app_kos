@@ -43,33 +43,41 @@ if (session_status() == PHP_SESSION_NONE) {
 <body>
 <div class="page-wrapper">
     <header class="site-header">
-        <div class="container"><h1><a href="<?php echo $baseUrl; ?>"><?php echo $currentAppName; ?></a></h1></div>
+        <div class="container"><h1><a href="<?php echo htmlspecialchars($baseUrl); ?>"><?php echo htmlspecialchars($currentAppName); ?></a></h1></div>
     </header>
+
     <nav class="main-navigation">
         <div class="container">
             <ul>
-                <li><a href="<?php echo $baseUrl; ?>">Home</a></li>
-                <li><a href="<?php echo rtrim($baseUrl, '/') . '/kos/daftar'; ?>">Daftar Kos</a></li>
-                <?php if (isset($_SESSION['user_id'])): ?>
-                    <?php
-                    $dashboardUrl = rtrim($baseUrl, '/') . '/user/dashboard'; 
-                    if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true) {
-                        $dashboardUrl = rtrim($baseUrl, '/') . '/admin/dashboard'; 
-                    }
-                    ?>
-                    <li><a href="<?php echo htmlspecialchars($dashboardUrl); ?>">Dashboard</a></li>
-                    <li><a href="<?php echo rtrim($baseUrl, '/') . '/auth/logout'; ?>">Logout (<?php echo htmlspecialchars($_SESSION['user_nama'] ?? 'User'); ?>)</a></li>
+                <?php if (isset($_SESSION['user_id']) && isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true): ?>
+                    <?php // Navigasi untuk ADMIN yang sedang login ?>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'admin/dashboard'); ?>">Dashboard Admin</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'auth/logout'); ?>">Logout (<?php echo htmlspecialchars($_SESSION['user_nama'] ?? 'Admin'); ?>)</a></li>
+
+                <?php elseif (isset($_SESSION['user_id'])): ?>
+                    <?php // Navigasi untuk PENGGUNA BIASA yang sedang login (bukan admin) ?>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>">Home</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>">Daftar Kos</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'user/dashboard'); ?>">Dashboard Saya</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'auth/logout'); ?>">Logout (<?php echo htmlspecialchars($_SESSION['user_nama'] ?? 'User'); ?>)</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'home/about'); ?>">Tentang</a></li>
+
                 <?php else: ?>
-                    <li><a href="<?php echo rtrim($baseUrl, '/') . '/auth/login'; ?>">Login</a></li>
-                    <li><a href="<?php echo rtrim($baseUrl, '/') . '/auth/register'; ?>">Registrasi</a></li>
+                    <?php // Navigasi untuk PENGUNJUNG (belum login) ?>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl); ?>">Home</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>">Daftar Kos</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'auth/login'); ?>">Login</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'auth/register'); ?>">Registrasi</a></li>
+                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'home/about'); ?>">Tentang</a></li>
                 <?php endif; ?>
-                <li><a href="<?php echo rtrim($baseUrl, '/') . '/home/about'; ?>">Tentang</a></li>
             </ul>
         </div>
     </nav>
+
     <main class="main-content-area">
         <div class="container">
             <?php
+            // ... (kode untuk menampilkan flash message tetap sama) ...
             if (isset($_SESSION['flash_message']) && is_array($_SESSION['flash_message'])) {
                 $flash = $_SESSION['flash_message'];
                 echo '<div class="flash-message ' . htmlspecialchars($flash['type'] ?? 'info') . '">';
@@ -78,4 +86,4 @@ if (session_status() == PHP_SESSION_NONE) {
                 unset($_SESSION['flash_message']); 
             }
             ?>
-            
+           
