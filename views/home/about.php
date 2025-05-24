@@ -17,7 +17,4 @@
     
     <p>Aplikasi ini bertujuan untuk memberikan solusi mudah dan cepat bagi para pencari kos dan pemilik kos.</p>
     
-    <p>
-        <a href="<?php echo htmlspecialchars($appConfig['BASE_URL']); ?>">Kembali ke Halaman Utama</a>
-    </p>
 </div>

@@ -16,7 +16,4 @@
         <li>Daftar kamar kos populer atau yang baru ditambahkan.</li>
         <li>Promo atau informasi penting lainnya.</li>
     </ul>
-    <p>
-        atau pelajari lebih lanjut <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'home/about'); ?>">tentang aplikasi ini</a>.
-    </p>
 </div>
