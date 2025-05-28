@@ -64,7 +64,6 @@ class BookingController extends BaseController {
             $metode_pembayaran = isset($_POST['metode_pembayaran']) ? trim(strip_tags($_POST['metode_pembayaran'])) : '';
             
             $durasi_sewa_bulan = filter_input(INPUT_POST, 'durasi_sewa', FILTER_VALIDATE_INT);
-            $nominal_bayar     = filter_input(INPUT_POST, 'nominal_bayar', FILTER_VALIDATE_FLOAT);
 
             $errors = [];
             if (empty($tanggal_mulai_str)) { $errors[] = "Tanggal mulai sewa wajib diisi."; }
@@ -72,7 +71,6 @@ class BookingController extends BaseController {
             if (empty($nama_pembayar)) { $errors[] = "Nama pembayar wajib diisi."; }
             if (empty($kontak_pembayar)) { $errors[] = "Kontak pembayar wajib diisi."; }
             if (empty($metode_pembayaran)) { $errors[] = "Metode pembayaran wajib dipilih."; }
-            if ($nominal_bayar === null || $nominal_bayar === false || $nominal_bayar < 0) { $errors[] = "Nominal pembayaran tidak valid atau wajib diisi."; }
 
             $total_harga = 0;
             $tanggal_selesai_str = '';
@@ -90,9 +88,6 @@ class BookingController extends BaseController {
                             $tanggal_selesai_obj = (clone $tanggal_mulai_obj)->add(new DateInterval("P{$durasi_sewa_bulan}M"));
                             $tanggal_selesai_str = $tanggal_selesai_obj->format('Y-m-d');
                             $durasi_sewa_text = "{$durasi_sewa_bulan} bulan";
-                        }
-                        if ($nominal_bayar < $total_harga) {
-                             $errors[] = "Nominal pembayaran (Rp " . number_format($nominal_bayar, 0, ',', '.') . ") kurang dari total tagihan (Rp " . number_format($total_harga, 0, ',', '.') . ").";
                         }
                     }
                 } catch (Exception $e) {
@@ -124,6 +119,8 @@ class BookingController extends BaseController {
             $bookingId = $this->bookingModel->createBooking($userId, $kos['id'], $tanggal_mulai_str, $tanggal_selesai_str, $durasi_sewa_text, $total_harga, 'pending'); // STATUS AWAL PENDING
 
             if ($bookingId) {
+                // Nominal bayar otomatis menggunakan total harga yang dihitung
+                $nominal_bayar = $total_harga;
                 $paymentId = $this->paymentModel->createPayment((int)$bookingId, $metode_pembayaran, $nominal_bayar, 'paid'); // Asumsi pembayaran langsung 'paid'
 
                 if ($paymentId) {

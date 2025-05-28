@@ -9,7 +9,6 @@ $input_kontak_pembayar = htmlspecialchars($input['kontak_pembayar'] ?? ''); // B
 $input_tanggal_mulai = htmlspecialchars($input['tanggal_mulai'] ?? date('Y-m-d'));
 $input_durasi_sewa = htmlspecialchars($input['durasi_sewa'] ?? '1');
 $input_metode_pembayaran = htmlspecialchars($input['metode_pembayaran'] ?? '');
-$input_nominal_bayar = htmlspecialchars($input['nominal_bayar'] ?? '');
 ?>
 
 <h2><?php echo htmlspecialchars($pageTitle ?? 'Form Pemesanan & Pembayaran'); ?></h2>
@@ -57,11 +56,6 @@ $input_nominal_bayar = htmlspecialchars($input['nominal_bayar'] ?? '');
             <option value="GoPay" <?php echo ($input_metode_pembayaran === 'GoPay') ? 'selected' : ''; ?>>GoPay</option>
             <option value="OVO" <?php echo ($input_metode_pembayaran === 'OVO') ? 'selected' : ''; ?>>OVO</option>
         </select>
-    </div>
-    <div style="margin-bottom: 15px;">
-        <label for="nominal_bayar" style="display: block; margin-bottom: 5px;">Nominal Pembayaran (Rp):</label>
-        <input type="number" id="nominal_bayar" name="nominal_bayar" value="<?php echo $input_nominal_bayar; ?>" required placeholder="Masukkan jumlah pembayaran" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        <small>Total tagihan akan dihitung berdasarkan harga kos dan durasi sewa. Pastikan nominal pembayaran mencukupi.</small>
     </div>
     
     <button type="submit" style="padding: 12px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em;">Pesan dan Bayar</button>
