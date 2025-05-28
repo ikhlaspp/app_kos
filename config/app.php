@@ -31,7 +31,17 @@ $appConfig = [
     'DEFAULT_ACTION'     => 'index',
     'SESSION_NAME'      => 'APP_KOS_SESSION_V3',
     'SESSION_LIFETIME'  => 7200,
-    'ADMIN_CHAT_RECIPIENT_ID' => 1, 
+    'ADMIN_CHAT_RECIPIENT_ID' => 1,
+    'APP_EMAIL' => 'kontak@domainanda.com',
+    'APP_PHONE' => '+62 123 4567 890',
+    'APP_ADDRESS' => 'Rungkut, Surabaya, Jawa Timur, Indonesia',
+    
+    'APP_SOCIAL_MEDIA' => [
+        'facebook' => 'https://www.facebook.com/yourpage',
+        'twitter'  => 'https://twitter.com/yourprofile',
+        'instagram' => 'https://www.instagram.com/yourprofile',
+        'linkedin' => 'https://www.linkedin.com/in/yourprofile',
+    ],
 ];
 
 $appConfig['ASSETS_URL']       = rtrim($appConfig['BASE_URL'], '/') . '/assets/';
