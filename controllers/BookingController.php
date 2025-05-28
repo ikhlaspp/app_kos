@@ -73,6 +73,7 @@ class BookingController extends BaseController {
             if (empty($metode_pembayaran)) { $errors[] = "Metode pembayaran wajib dipilih."; }
 
             $total_harga = 0;
+            
             $tanggal_selesai_str = '';
             $durasi_sewa_text = '';
 
@@ -85,6 +86,8 @@ class BookingController extends BaseController {
                     } else {
                         if ($durasi_sewa_bulan > 0 && isset($kos['harga_per_bulan'])) {
                             $total_harga = $kos['harga_per_bulan'] * $durasi_sewa_bulan;
+                            $pajak = $total_harga * 0.10;
+                            $total_harga = $total_harga + $pajak;
                             $tanggal_selesai_obj = (clone $tanggal_mulai_obj)->add(new DateInterval("P{$durasi_sewa_bulan}M"));
                             $tanggal_selesai_str = $tanggal_selesai_obj->format('Y-m-d');
                             $durasi_sewa_text = "{$durasi_sewa_bulan} bulan";
@@ -120,6 +123,7 @@ class BookingController extends BaseController {
 
             if ($bookingId) {
                 // Nominal bayar otomatis menggunakan total harga yang dihitung
+                
                 $nominal_bayar = $total_harga;
                 $paymentId = $this->paymentModel->createPayment((int)$bookingId, $metode_pembayaran, $nominal_bayar, 'paid'); // Asumsi pembayaran langsung 'paid'
 

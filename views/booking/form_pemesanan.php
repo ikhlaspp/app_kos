@@ -9,6 +9,7 @@ $input_kontak_pembayar = htmlspecialchars($input['kontak_pembayar'] ?? ''); // B
 $input_tanggal_mulai = htmlspecialchars($input['tanggal_mulai'] ?? date('Y-m-d'));
 $input_durasi_sewa = htmlspecialchars($input['durasi_sewa'] ?? '1');
 $input_metode_pembayaran = htmlspecialchars($input['metode_pembayaran'] ?? '');
+
 ?>
 
 <h2><?php echo htmlspecialchars($pageTitle ?? 'Form Pemesanan & Pembayaran'); ?></h2>
@@ -17,6 +18,7 @@ $input_metode_pembayaran = htmlspecialchars($input['metode_pembayaran'] ?? '');
     <h4>Detail Kos yang Dipesan:</h4>
     <p><strong>Nama Kos:</strong> <?php echo htmlspecialchars($kos['nama_kos']); ?></p>
     <p><strong>Harga per Bulan:</strong> Rp <?php echo $harga_kos_rp; ?></p>
+    <p><strong>Biaya Admin:</strong>  <?php echo "10%" ?></p>
 </div>
 
 <form action="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'booking/pesan/' . $kos['id']); ?>" method="POST" style="max-width: 600px;">
@@ -33,6 +35,7 @@ $input_metode_pembayaran = htmlspecialchars($input['metode_pembayaran'] ?? '');
             <option value="6" <?php echo ($input_durasi_sewa == '6') ? 'selected' : ''; ?>>6 Bulan</option>
             <option value="12" <?php echo ($input_durasi_sewa == '12') ? 'selected' : ''; ?>>12 Bulan (1 Tahun)</option>
         </select>
+
     </div>
     <p><em>Total harga akan dihitung berdasarkan durasi sewa.</em></p>
 
@@ -47,7 +50,7 @@ $input_metode_pembayaran = htmlspecialchars($input['metode_pembayaran'] ?? '');
     </div>
 
     <h4 style="margin-top:20px;">Detail Pembayaran:</h4>
-    <div style="margin-bottom: 10px;">
+        <div style="margin-bottom: 10px;">
         <label for="metode_pembayaran" style="display: block; margin-bottom: 5px;">Metode Pembayaran:</label>
         <select id="metode_pembayaran" name="metode_pembayaran" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
             <option value="">-- Pilih Metode --</option>
@@ -57,9 +60,63 @@ $input_metode_pembayaran = htmlspecialchars($input['metode_pembayaran'] ?? '');
             <option value="OVO" <?php echo ($input_metode_pembayaran === 'OVO') ? 'selected' : ''; ?>>OVO</option>
         </select>
     </div>
-    
+
+    <?php
+
+// Hitung total harga dan pajak
+$durasi = (int)$input_durasi_sewa;
+$harga_per_bulan = $kos['harga_per_bulan'];
+$harga_awal = $harga_per_bulan * $durasi;
+$pajak = $harga_awal * 0.10;
+$total_pembayaran = $harga_awal + $pajak;
+?>
+
+<!-- Kotak Harga Awal + Pajak -->
+<div style="margin-bottom: 10px; padding: 15px; background-color: #f0f4ff; border: 1px solid #b3c7ff; border-radius: 5px;">
+    <strong>Rincian Harga:</strong><br>
+    <div style="margin-top: 8px;">
+        <strong>Harga Awal (<span id="durasi-display"><?php echo $durasi; ?></span> bulan):</strong>
+        Rp <span id="harga-awal"><?php echo number_format($harga_awal, 0, ',', '.'); ?></span><br>
+        <strong>Pajak (10%):</strong>
+        Rp <span id="pajak"><?php echo number_format($pajak, 0, ',', '.'); ?></span>
+    </div>
+</div>
+
+<!-- Kotak Total -->
+<div style="margin-bottom: 20px; padding: 15px; background-color: #fff8e1; border: 1px solid #ffe082; border-radius: 5px;">
+    <strong>Total Pembayaran:</strong><br>
+    <span style="font-size: 1.3em; font-weight: bold;">Rp <span id="total"><?php echo number_format($total_pembayaran, 0, ',', '.'); ?></span></span>
+</div>
+
     <button type="submit" style="padding: 12px 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1em;">Pesan dan Bayar</button>
+
 </form>
+
+<script>
+    const hargaPerBulan = <?php echo (int)$kos['harga_per_bulan']; ?>;
+    const durasiSelect = document.getElementById('durasi_sewa');
+    const durasiDisplay = document.getElementById('durasi-display');
+    const hargaAwalEl = document.getElementById('harga-awal');
+    const pajakEl = document.getElementById('pajak');
+    const totalEl = document.getElementById('total');
+
+    // Format angka ke format rupiah Indonesia
+    function formatRupiah(angka) {
+        return angka.toLocaleString('id-ID');
+    }
+
+    durasiSelect.addEventListener('change', function () {
+        const durasi = parseInt(this.value);
+        const hargaAwal = hargaPerBulan * durasi;
+        const pajak = hargaAwal * 0.10;
+        const total = hargaAwal + pajak;
+
+        durasiDisplay.textContent = durasi;
+        hargaAwalEl.textContent = formatRupiah(hargaAwal);
+        pajakEl.textContent = formatRupiah(pajak);
+        totalEl.textContent = formatRupiah(total);
+    });
+</script>
 
 <p style="margin-top: 30px;">
     <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'kos/detail/' . $kos['id']); ?>">Batal dan Kembali ke Detail Kos</a>
