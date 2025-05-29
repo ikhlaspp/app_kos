@@ -248,5 +248,15 @@ class KosModel {
         error_log("KosModel::deleteGambarKosById: Gagal menghapus gambar ID {$gambar_id} dari DB atau gambar tidak ditemukan.");
         return null;
     }
+
+    public function countTotalKos(): int {
+        try {
+            $stmt = $this->pdo->query("SELECT COUNT(*) FROM kos");
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("KosModel::countTotalKos Error: " . $e->getMessage());
+            return 0;
+        }
+    }
 }
 ?>
