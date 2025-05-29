@@ -141,5 +141,39 @@ class UserModel {
             return [];
         }
     }
+
+    public function countTotalUsers(): int {
+        try {
+            $stmt = $this->pdo->query("SELECT COUNT(*) FROM users");
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("UserModel::countTotalUsers Error: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function updateUserLastActive(int $userId): bool {
+        $sql = "UPDATE users SET last_active_at = CURRENT_TIMESTAMP WHERE id = :user_id";
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("UserModel::updateUserLastActive Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Mengambil informasi nama dan waktu aktif terakhir seorang pengguna.
+     * @return array|false Data pengguna atau false jika tidak ditemukan.
+     */
+    public function getUserActivityInfo(int $userId) {
+        $sql = "SELECT id, nama, last_active_at FROM users WHERE id = :user_id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
 }
 ?>
