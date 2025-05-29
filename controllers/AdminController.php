@@ -74,7 +74,7 @@ class AdminController extends BaseController {
             'recentConfirmedBookings' => $recentConfirmedBookings,
             'recentLogs' => $recentLogs,
         ];
-        $this->loadAdminView('dashboard_summary', $data, $pageTitle); 
+        $this->loadAdminView('dashboard', $data, $pageTitle); 
     }
 
     // --- KOS CRUD ---
