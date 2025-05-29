@@ -60,6 +60,7 @@ class AdminController extends BaseController {
         $totalUsers = $this->userModel->countTotalUsers() ?? 0;
         $totalKos = $this->kosModel->countTotalKos() ?? 0;
         $pendingBookings = $this->bookingModel->countPendingBookings() ?? 0;
+        $totalBookings = $this->bookingModel->countTotalBookings() ?? 0;
         $recentConfirmedBookings = $this->bookingModel->getRecentConfirmedBookings(5) ?? [];
         
         $recentLogs = [];
@@ -71,6 +72,7 @@ class AdminController extends BaseController {
             'totalUsers' => $totalUsers,
             'totalKos' => $totalKos,
             'pendingBookings' => $pendingBookings,
+            'totalBookings' => $totalBookings,
             'recentConfirmedBookings' => $recentConfirmedBookings,
             'recentLogs' => $recentLogs,
         ];

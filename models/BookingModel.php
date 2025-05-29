@@ -126,5 +126,15 @@ class BookingModel {
             return [];
         }
     }
+
+    public function countTotalBookings(): int {
+        try {
+            $stmt = $this->pdo->query("SELECT COUNT(*) FROM bookings");
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("BookingModel::countTotalBookings Error: " . $e->getMessage());
+            return 0;
+        }
+    }
 }
 ?>
