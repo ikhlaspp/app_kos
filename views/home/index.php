@@ -27,6 +27,9 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
            - Medium Blue: #6A9EFF or #4285F4 (Bootstrap primary can be overridden)
            - Dark Blue: #1C3A6E or #0D2A57
         */
+        html {
+            scroll-behavior: smooth; /* Untuk efek scroll yang halus */
+        }
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #F0F4FF; /* Lightest blue for page background */
@@ -127,6 +130,9 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
         }
         .feature-card .card-body {
             padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .feature-card .card-title {
             color: #1C3A6E; /* Dark blue */
@@ -136,6 +142,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
         .feature-card .card-text, .feature-card ul li {
             color: #0D2A57; /* Darkest blue, slightly lighter than title */
             font-weight: 400;
+            margin-bottom: 1rem; /* Added margin for spacing */
         }
         .feature-card i {
             font-size: 2rem;
@@ -148,6 +155,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             border-color: #4285F4;
             font-weight: 600;
             border-radius: 50px;
+            margin-top: auto; /* Pushes button to the bottom */
         }
         .feature-card .btn-outline-custom:hover {
             background-color: #4285F4;
@@ -156,7 +164,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
 
         .promo-section {
             background-color: #D6E4FF; /* Light blue background */
-            padding: 3rem 0;
+            padding: 3rem 1rem; /* Adjusted padding for responsiveness */
             border-radius: 20px;
             margin-top: 2rem;
         }
@@ -200,14 +208,19 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
         .additional-info-section .accordion-item {
             background-color: #F8F9FA; /* Lighter than page background for contrast */
             border: 1px solid #D6E4FF; /* Light blue border */
-            border-radius: 0.5rem; /* Rounded corners for accordion items */
+            border-radius: 0.5rem !important; /* Rounded corners for accordion items, added !important for specificity */
             margin-bottom: 0.5rem;
+            overflow: hidden; /* Ensures child border-radius is contained */
         }
+        .additional-info-section .accordion-header { /* Ensure header also has rounded corners */
+             border-radius: calc(0.5rem - 1px);
+        }
+
         .additional-info-section .accordion-button {
             color: #1C3A6E; /* Dark blue for accordion button text */
             font-weight: 600;
             background-color: #E9F0FF; /* Very light blue for accordion button background */
-            border-radius: calc(0.5rem - 1px); /* Match item's border radius */
+            border-radius: calc(0.5rem - 1px) !important; /* Match item's border radius */
         }
         .additional-info-section .accordion-button:not(.collapsed) {
             background-color: #D6E4FF; /* Light blue when expanded */
@@ -221,6 +234,8 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             color: #0D2A57;
             background-color: #FFFFFF; /* White background for content */
             padding: 1.25rem;
+             border-bottom-left-radius: calc(0.5rem - 1px); /* Rounded bottom corners for body */
+            border-bottom-right-radius: calc(0.5rem - 1px);
         }
         .additional-info-section .accordion-button::after { /* Custom accordion icon color */
             filter: invert(15%) sepia(45%) saturate(2500%) hue-rotate(210deg) brightness(90%) contrast(95%);
@@ -250,45 +265,20 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             margin-bottom: 0;
             font-weight: 300;
         }
+
+        /* Target specific scroll padding for fixed navbar */
+        [id] {
+            scroll-margin-top: 80px; /* Adjust this value based on your navbar height */
+        }
+
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-home"></i><?php echo htmlspecialchars($namaAplikasi); ?>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon" style="filter: invert(1) brightness(2);"></span> </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Cari Kos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Tentang Kami</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Kontak</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-outline-light btn-sm px-3 ms-lg-2" href="#">Login</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
     <header class="hero-section">
         <div class="container">
             <h1><?php echo htmlspecialchars($pesanSelamatDatang); ?></h1>
-            <p>Platform terpercaya untuk menemukan kos idaman dengan mudah dan cepat. Jelajahi berbagai pilihan kos berkualitas di lokasi strategis.</p>
-            <a href="#" class="btn btn-custom-primary"><i class="fas fa-search me-2"></i>Mulai Cari Kos</a>
-            <a href="#fitur" class="btn btn-custom-secondary">Lihat Fitur</a>
+            <p><h5>Platform terpercaya untuk menemukan kos idaman dengan mudah dan cepat. Jelajahi berbagai pilihan kos berkualitas di lokasi strategis.</h5></p>
         </div>
     </header>
 
@@ -299,44 +289,46 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
 
         <div id="fitur" class="text-center mb-5 pt-4">
              <h2 style="color: #1C3A6E; font-weight: 700;">Kenapa Memilih <?php echo htmlspecialchars($namaAplikasi); ?>?</h2>
-             <p class="lead" style="color: #0D2A57;">Kami menyediakan fitur terbaik untuk pengalaman mencari kos yang tak terlupakan.</p>
+             <p class="lead" style="color: #0D2A57;"><h6>Kami menyediakan fitur terbaik untuk pengalaman mencari kos yang tak terlupakan.</h6></p>
         </div>
 
         <div class="row">
             <div class="col-md-4 d-flex align-items-stretch">
                 <div class="card feature-card text-center">
                     <div class="card-body">
-                        <i class="fas fa-search-location"></i>
-                        <h5 class="card-title">Pencarian Cepat & Akurat</h5>
-                        <p class="card-text">Temukan kamar kos impian Anda dengan filter pencarian yang lengkap dan hasil yang relevan.</p>
-                        <a href="#" class="btn btn-outline-custom mt-auto">Cari Sekarang</a>
+                        <div> <i class="fas fa-search-location"></i>
+                            <h5 class="card-title">Pencarian Cepat & Akurat</h5>
+                            <p class="card-text">Temukan kamar kos impian Anda dengan filter pencarian yang lengkap dan hasil yang relevan.</p>
+                        </div>
+                        <a href="#infoAccordion" class="btn btn-outline-custom">Cari Sekarang</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 d-flex align-items-stretch">
                 <div class="card feature-card text-center">
                     <div class="card-body">
-                        <i class="fas fa-star"></i>
-                        <h5 class="card-title">Kos Populer & Terverifikasi</h5>
-                        <p class="card-text">Lihat daftar kamar kos populer pilihan pengguna atau yang baru saja ditambahkan oleh pemilik.</p>
-                        <a href="#" class="btn btn-outline-custom mt-auto">Lihat Populer</a>
+                        <div> <i class="fas fa-star"></i>
+                            <h5 class="card-title">Kos Populer & Terverifikasi</h5>
+                            <p class="card-text">Lihat daftar kamar kos populer pilihan pengguna atau yang baru saja ditambahkan oleh pemilik.</p>
+                        </div>
+                        <a href="#infoAccordion" class="btn btn-outline-custom">Lihat Populer</a>
                     </div>
                 </div>
             </div>
             <div class="col-md-4 d-flex align-items-stretch">
                 <div class="card feature-card text-center">
                     <div class="card-body">
-                        <i class="fas fa-tags"></i>
-                        <h5 class="card-title">Promo & Informasi Terbaru</h5>
-                        <p class="card-text">Jangan lewatkan promo menarik dan informasi penting lainnya seputar dunia kos.</p>
-                        <a href="#" class="btn btn-outline-custom mt-auto">Cek Promo</a>
+                        <div> <i class="fas fa-bullhorn"></i>
+                            <h5 class="card-title">Promo & Informasi Penting</h5>
+                            <p class="card-text">Dapatkan penawaran spesial, diskon, dan informasi penting seputar kos.</p>
+                        </div>
+                        <a href="#infoAccordion" class="btn btn-outline-custom">Promo & Informasi</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="additional-info-section">
-             <h3><i class="fas fa-info-circle me-2" style="color: #4285F4;"></i>Informasi Tambahan</h3>
+        <div class="additional-info-section" id="infoAccordionParent"> <h3><i class="fas fa-info-circle me-2" style="color: #4285F4;"></i>Informasi Tambahan</h3>
              <p><?php echo htmlspecialchars($pesanSelamatDatang ?? 'Selamat datang di aplikasi kami!'); // Original message ?></p>
              <p>Ini adalah halaman utama yang dirancang untuk memberikan kemudahan bagi Anda dalam menemukan kos idaman. Anda dapat menyesuaikan konten ini lebih lanjut sesuai dengan fitur spesifik aplikasi booking kos Anda.</p>
              <p class="mb-3">Beberapa hal menarik yang bisa Anda temukan atau tampilkan di sini misalnya:</p>
@@ -380,17 +372,9 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
                 </div>
             </div>
              <div class="text-center mt-4">
-                <button type="button" class="btn btn-learn-more"><i class="fas fa-arrow-right me-2"></i>Pelajari Lebih Lanjut</button>
+                <a href="#fitur" class="btn btn-learn-more"><i class="fas fa-arrow-right me-2"></i>Pelajari Lebih Lanjut</a>
              </div>
         </div>
-
-        <section class="promo-section text-center mt-5">
-            <div class="container">
-                <h3><i class="fas fa-gift me-2"></i> Dapatkan Diskon Spesial!</h3>
-                <p class="my-3">Daftar sekarang dan dapatkan diskon hingga 20% untuk booking pertama Anda. Jangan sampai ketinggalan!</p>
-                <a href="#" class="btn btn-promo">Klaim Diskon</a>
-            </div>
-        </section>
     </div>
 
     <footer class="footer-custom">
