@@ -257,8 +257,7 @@ if (session_status() == PHP_SESSION_NONE) {
                 </div>
         </div>
     </header>
-
-    <main class="main-content-area">
+     <main class="main-content-area">
         <div class="container">
             <?php
             if (isset($_SESSION['flash_message']) && is_array($_SESSION['flash_message'])) {
@@ -269,3 +268,4 @@ if (session_status() == PHP_SESSION_NONE) {
                 unset($_SESSION['flash_message']); 
             }
             ?>
+

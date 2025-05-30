@@ -96,5 +96,45 @@ class BookingModel {
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function countPendingBookings(): int {
+        try {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM bookings WHERE status_pemesanan = 'pending'");
+            $stmt->execute();
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("BookingModel::countPendingBookings Error: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function getRecentConfirmedBookings(int $limit = 5): array {
+        try {
+            $sql = "SELECT b.id, k.nama_kos, u.nama as nama_penyewa, b.tanggal_pemesanan, b.total_harga
+                    FROM bookings b
+                    JOIN kos k ON b.kos_id = k.id
+                    JOIN users u ON b.user_id = u.id
+                    WHERE b.status_pemesanan = 'confirmed'
+                    ORDER BY b.tanggal_pemesanan DESC
+                    LIMIT :limit";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("BookingModel::getRecentConfirmedBookings Error: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function countTotalBookings(): int {
+        try {
+            $stmt = $this->pdo->query("SELECT COUNT(*) FROM bookings");
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("BookingModel::countTotalBookings Error: " . $e->getMessage());
+            return 0;
+        }
+    }
 }
 ?>

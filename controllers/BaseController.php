@@ -54,5 +54,15 @@ abstract class BaseController {
         }
     }
 
+    protected function getInputPost(string $key, $default = null, int $filter = FILTER_DEFAULT, $options = 0) {
+        $value = filter_input(INPUT_POST, $key, $filter, $options);
+        return ($value === null || $value === false && $filter !== FILTER_VALIDATE_BOOLEAN) ? $default : $value;
+    }
+
+    protected function getInputGet(string $key, $default = null, int $filter = FILTER_DEFAULT, $options = 0) {
+        $value = filter_input(INPUT_GET, $key, $filter, $options);
+        return ($value === null || $value === false && $filter !== FILTER_VALIDATE_BOOLEAN) ? $default : $value;
+    }
+
 }
 ?>
