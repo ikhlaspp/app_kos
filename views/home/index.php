@@ -1,11 +1,10 @@
 <?php
-// Variabel $pageTitle, $appConfig, dan $pesanSelamatDatang
-// telah di-passing dari HomeController melalui BaseController::loadView().
-
-// Default values for demonstration if not passed
-$pageTitle = $pageTitle ?? 'Sistem Booking Kos Modern';
+//views/home/index.php
+$pageTitle = $pageTitle ?? 'Sistem Booking Kos';
 $pesanSelamatDatang = $pesanSelamatDatang ?? 'Temukan Kos Impian Anda Bersama Kami!';
-$namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
+
+$namaAplikasi = $appConfig['APP_NAME'] ?? 'KosKita'; 
+$baseUrl = $appConfig['BASE_URL'] ?? './';
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -20,21 +19,15 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <style>
-        /* Custom Styles based on the provided color palette */
-        /* Palette:
-           - Lightest Blue/White: #FFFFFF or #F0F4FF
-           - Light Blue: #D6E4FF or #C0D6FF
-           - Medium Blue: #6A9EFF or #4285F4 (Bootstrap primary can be overridden)
-           - Dark Blue: #1C3A6E or #0D2A57
-        */
+    
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #F0F4FF; /* Lightest blue for page background */
-            color: #0D2A57; /* Darkest blue for primary text */
+            background-color: #F0F4FF; 
+            color: #0D2A57; 
         }
 
         .navbar-custom {
-            background-color: #0D2A57; /* Darkest blue for navbar */
+            background-color: #0D2A57; 
             padding-top: 1rem;
             padding-bottom: 1rem;
         }
@@ -45,20 +38,19 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
         }
         .navbar-custom .nav-link:hover,
         .navbar-custom .nav-link.active {
-            color: #D6E4FF; /* Light blue for hover/active link */
+            color: #D6E4FF; 
         }
         .navbar-brand i {
             margin-right: 8px;
-            color: #6A9EFF; /* Medium blue for icon */
+            color: #6A9EFF; 
         }
 
         .hero-section {
-            background: linear-gradient(135deg, #4285F4, #1C3A6E); /* Gradient from medium to dark blue */
+            background: linear-gradient(135deg, #4285F4, #1C3A6E); 
             color: #FFFFFF;
             padding: 6rem 1rem;
             text-align: center;
-            border-bottom-left-radius: 50px;
-            border-bottom-right-radius: 50px;
+            border-radius: 50px;
             margin-bottom: 2rem;
         }
         .hero-section h1 {
@@ -73,7 +65,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
         }
         .hero-section .btn-custom-primary {
             background-color: #FFFFFF;
-            color: #1C3A6E; /* Dark blue text on white button */
+            color: #1C3A6E; 
             border: 2px solid #FFFFFF;
             font-weight: 600;
             padding: 0.75rem 2rem;
@@ -88,7 +80,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
          .hero-section .btn-custom-secondary {
             background-color: transparent;
             color: #FFFFFF;
-            border: 2px solid #D6E4FF; /* Light blue border */
+            border: 2px solid #D6E4FF; 
             font-weight: 600;
             padding: 0.75rem 2rem;
             border-radius: 50px;
@@ -97,12 +89,12 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
         }
         .hero-section .btn-custom-secondary:hover {
             background-color: #D6E4FF;
-            color: #1C3A6E; /* Dark blue text */
+            color: #1C3A6E; 
         }
 
 
         .page-header h2 {
-            color: #1C3A6E; /* Dark blue for section titles */
+            color: #1C3A6E; 
             font-weight: 700;
             margin-bottom: 1.5rem;
             text-align: center;
@@ -116,10 +108,10 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             background-color: #FFFFFF;
             border: none;
             border-radius: 15px;
-            box-shadow: 0 8px 25px rgba(28, 58, 110, 0.1); /* Subtle shadow with dark blue tint */
+            box-shadow: 0 8px 25px rgba(28, 58, 110, 0.1); 
             margin-bottom: 1.5rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%; /* Ensure cards have same height in a row */
+            height: 100%; 
         }
         .feature-card:hover {
             transform: translateY(-5px);
@@ -129,17 +121,17 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             padding: 2rem;
         }
         .feature-card .card-title {
-            color: #1C3A6E; /* Dark blue */
+            color: #1C3A6E; 
             font-weight: 600;
             margin-bottom: 1rem;
         }
         .feature-card .card-text, .feature-card ul li {
-            color: #0D2A57; /* Darkest blue, slightly lighter than title */
+            color: #0D2A57; 
             font-weight: 400;
         }
         .feature-card i {
             font-size: 2rem;
-            color: #4285F4; /* Medium blue for icons */
+            color: #4285F4; 
             margin-bottom: 1rem;
             display: block;
         }
@@ -155,7 +147,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
         }
 
         .promo-section {
-            background-color: #D6E4FF; /* Light blue background */
+            background-color: #D6E4FF;
             padding: 3rem 0;
             border-radius: 20px;
             margin-top: 2rem;
@@ -198,35 +190,35 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             line-height: 1.7;
         }
         .additional-info-section .accordion-item {
-            background-color: #F8F9FA; /* Lighter than page background for contrast */
-            border: 1px solid #D6E4FF; /* Light blue border */
-            border-radius: 0.5rem; /* Rounded corners for accordion items */
+            background-color: #F8F9FA; 
+            border: 1px solid #D6E4FF; 
+            border-radius: 0.5rem; 
             margin-bottom: 0.5rem;
         }
         .additional-info-section .accordion-button {
-            color: #1C3A6E; /* Dark blue for accordion button text */
+            color: #1C3A6E; /
             font-weight: 600;
-            background-color: #E9F0FF; /* Very light blue for accordion button background */
-            border-radius: calc(0.5rem - 1px); /* Match item's border radius */
+            background-color: #E9F0FF; 
+            border-radius: calc(0.5rem - 1px); 
         }
         .additional-info-section .accordion-button:not(.collapsed) {
-            background-color: #D6E4FF; /* Light blue when expanded */
+            background-color: #D6E4FF; 
             color: #0D2A57;
             box-shadow: inset 0 -1px 0 rgba(0,0,0,.125);
         }
         .additional-info-section .accordion-button:focus {
-            box-shadow: 0 0 0 0.25rem rgba(66, 133, 244, 0.25); /* Medium blue focus ring */
+            box-shadow: 0 0 0 0.25rem rgba(66, 133, 244, 0.25); 
         }
         .additional-info-section .accordion-body {
             color: #0D2A57;
-            background-color: #FFFFFF; /* White background for content */
+            background-color: #FFFFFF; /
             padding: 1.25rem;
         }
-        .additional-info-section .accordion-button::after { /* Custom accordion icon color */
+        .additional-info-section .accordion-button::after { 
             filter: invert(15%) sepia(45%) saturate(2500%) hue-rotate(210deg) brightness(90%) contrast(95%);
         }
          .additional-info-section .btn-learn-more {
-            background-color: #4285F4; /* Medium blue */
+            background-color: #4285F4; 
             color: white;
             border-radius: 50px;
             padding: 0.75rem 2rem;
@@ -235,13 +227,13 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             transition: background-color 0.3s ease;
         }
         .additional-info-section .btn-learn-more:hover {
-            background-color: #1C3A6E; /* Darker blue on hover */
+            background-color: #1C3A6E; 
         }
 
 
         .footer-custom {
-            background-color: #0D2A57; /* Darkest blue for footer */
-            color: #D6E4FF; /* Light blue text */
+            background-color: #0D2A57; 
+            color: #D6E4FF; 
             padding: 2rem 0;
             margin-top: 3rem;
             text-align: center;
@@ -250,52 +242,38 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             margin-bottom: 0;
             font-weight: 300;
         }
+
+        @media (max-width: 768px) {
+            .hero-section h1 { font-size: 2.2rem; }
+            .hero-section p { font-size: 1rem; }
+            .hero-section .btn-custom-primary, .hero-section .btn-custom-secondary {
+                padding: 0.6rem 1.5rem;
+                font-size: 0.9rem;
+                display: block; 
+                margin-bottom: 10px;
+            }
+            .hero-section .btn-custom-secondary { margin-left: 0; }
+            .feature-card .card-body { padding: 1.5rem; }
+            .additional-info-section { padding: 1.5rem; }
+        }
+        @media (max-width: 576px) {
+            .hero-section { padding: 3rem 1rem; border-radius: 0 0 25px 25px;}
+            .promo-section { padding: 2rem 1rem; }
+        }
     </style>
 </head>
 <body>
-
-    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="#">
-                <i class="fas fa-home"></i><?php echo htmlspecialchars($namaAplikasi); ?>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon" style="filter: invert(1) brightness(2);"></span> </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="#">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Cari Kos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Tentang Kami</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Kontak</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-outline-light btn-sm px-3 ms-lg-2" href="#">Login</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
 
     <header class="hero-section">
         <div class="container">
             <h1><?php echo htmlspecialchars($pesanSelamatDatang); ?></h1>
             <p>Platform terpercaya untuk menemukan kos idaman dengan mudah dan cepat. Jelajahi berbagai pilihan kos berkualitas di lokasi strategis.</p>
-            <a href="#" class="btn btn-custom-primary"><i class="fas fa-search me-2"></i>Mulai Cari Kos</a>
+            <a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>" class="btn btn-custom-primary"><i class="fas fa-search me-2"></i>Mulai Cari Kos</a>
             <a href="#fitur" class="btn btn-custom-secondary">Lihat Fitur</a>
         </div>
     </header>
 
     <div class="container content-section">
-        <!-- <div class="page-header mt-5 mb-4">
-            <h2><?php echo htmlspecialchars($pageTitle); ?></h2>
-        </div> -->
 
         <div id="fitur" class="text-center mb-5 pt-4">
              <h2 style="color: #1C3A6E; font-weight: 700;">Kenapa Memilih <?php echo htmlspecialchars($namaAplikasi); ?>?</h2>
@@ -309,7 +287,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
                         <i class="fas fa-search-location"></i>
                         <h5 class="card-title">Pencarian Cepat & Akurat</h5>
                         <p class="card-text">Temukan kamar kos impian Anda dengan filter pencarian yang lengkap dan hasil yang relevan.</p>
-                        <a href="#" class="btn btn-outline-custom mt-auto">Cari Sekarang</a>
+                        <a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>" class="btn btn-outline-custom mt-auto">Cari Sekarang</a>
                     </div>
                 </div>
             </div>
@@ -319,7 +297,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
                         <i class="fas fa-star"></i>
                         <h5 class="card-title">Kos Populer & Terverifikasi</h5>
                         <p class="card-text">Lihat daftar kamar kos populer pilihan pengguna atau yang baru saja ditambahkan oleh pemilik.</p>
-                        <a href="#" class="btn btn-outline-custom mt-auto">Lihat Populer</a>
+                        <a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>" class="btn btn-outline-custom mt-auto">Lihat Populer</a>
                     </div>
                 </div>
             </div>
@@ -329,7 +307,7 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
                         <i class="fas fa-tags"></i>
                         <h5 class="card-title">Promo & Informasi Terbaru</h5>
                         <p class="card-text">Jangan lewatkan promo menarik dan informasi penting lainnya seputar dunia kos.</p>
-                        <a href="#" class="btn btn-outline-custom mt-auto">Cek Promo</a>
+                        <a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>" class="btn btn-outline-custom mt-auto">Cek Promo</a>
                     </div>
                 </div>
             </div>
@@ -388,17 +366,10 @@ $namaAplikasi = $appConfig['nama_aplikasi'] ?? 'KosKita';
             <div class="container">
                 <h3><i class="fas fa-gift me-2"></i> Dapatkan Diskon Spesial!</h3>
                 <p class="my-3">Daftar sekarang dan dapatkan diskon hingga 20% untuk booking pertama Anda. Jangan sampai ketinggalan!</p>
-                <a href="#" class="btn btn-promo">Klaim Diskon</a>
+                <a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>" class="btn btn-promo">Klaim Diskon</a>
             </div>
         </section>
     </div>
-
-    <footer class="footer-custom">
-        <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> <?php echo htmlspecialchars($namaAplikasi); ?>. All Rights Reserved.</p>
-            <p>Dibuat dengan <i class="fas fa-heart" style="color: #ff7b7b;"></i> untuk kemudahan Anda.</p>
-        </div>
-    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
