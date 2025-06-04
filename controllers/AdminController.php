@@ -82,8 +82,59 @@ class AdminController extends BaseController {
     // --- KOS CRUD ---
     public function kos(): void { 
         $pageTitle = "Manajemen Data Kos";
-        $daftarKos = $this->kosModel->getAllKos('id', 'ASC');
-        $this->loadAdminView('kos/list', ['daftarKos' => $daftarKos], $pageTitle);
+
+        // Ambil parameter filter dan search dari GET request
+        $filterValues = [
+            'search_term' => $this->getInputGet('search_term', null, FILTER_SANITIZE_SPECIAL_CHARS),
+            'kategori'    => $this->getInputGet('kategori', null, FILTER_SANITIZE_SPECIAL_CHARS),
+            'min_harga'   => $this->getInputGet('min_harga', null, FILTER_VALIDATE_FLOAT),
+            'max_harga'   => $this->getInputGet('max_harga', null, FILTER_VALIDATE_FLOAT),
+            'status'      => $this->getInputGet('status', null, FILTER_SANITIZE_SPECIAL_CHARS),
+            'fasilitas'   => $this->getInputGet('fasilitas', null, FILTER_SANITIZE_SPECIAL_CHARS),
+        ];
+        // Bersihkan nilai filter yang kosong agar tidak dianggap sebagai filter aktif jika tidak perlu
+        foreach ($filterValues as $key => $value) {
+            if ($value === '') {
+                $filterValues[$key] = null;
+            }
+        }
+
+        $currentPage = $this->getInputGet('page', 1, FILTER_VALIDATE_INT);
+        if ($currentPage < 1) $currentPage = 1;
+        
+        $itemsPerPage = 10; // Atau ambil dari konfigurasi
+        $offset = ($currentPage - 1) * $itemsPerPage;
+
+        // --- PERBAIKAN PEMANGGILAN getAllKos ---
+        // Argumen pertama adalah array $filterValues
+        // Argumen kedua adalah kolom untuk orderBy (default 'id')
+        // Argumen ketiga adalah arah orderDir (default 'ASC')
+        // Argumen keempat adalah limit
+        // Argumen kelima adalah offset
+        $daftarKos = $this->kosModel->getAllKos($filterValues, 'id', 'ASC', $itemsPerPage, $offset);
+        
+        $totalFilteredKos = $this->kosModel->countAllKosFiltered($filterValues);
+        $totalPages = ($itemsPerPage > 0) ? ceil($totalFilteredKos / $itemsPerPage) : 1;
+        if ($totalPages < 1) $totalPages = 1;
+        if ($currentPage > $totalPages && $totalPages > 0) { $currentPage = $totalPages; }
+
+        $filterParamsForUrl = array_filter($filterValues, function($value) { return $value !== null;});
+        $filterQueryString = !empty($filterParamsForUrl) ? '&' . http_build_query($filterParamsForUrl) : '';
+        
+        $paginationBaseUrl = $this->appConfig['BASE_URL'] . 'admin/kos';
+
+        $data = [
+            'daftarKos'     => $daftarKos,
+            'filterValues'  => $filterValues,
+            'pagination'    => [
+                'currentPage'   => $currentPage,
+                'totalPages'    => $totalPages,
+                'baseUrl'       => $paginationBaseUrl,
+                'queryString'   => $filterQueryString
+            ]
+        ];
+        
+        $this->loadAdminView('kos/list', $data, $pageTitle);
     }
     
     private function _handleImageUploads(int $kosId, array $filesData, string $uploadDirFs): array {

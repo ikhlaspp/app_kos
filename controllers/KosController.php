@@ -1,11 +1,13 @@
 <?php
+// File: nama_proyek_kos/controllers/KosController.php
 
 class KosController extends BaseController {
     private KosModel $kosModel;
+    private int $itemsPerPage = 9; 
 
     public function __construct(PDO $pdo, array $appConfig) {
         parent::__construct($pdo, $appConfig);
-        $this->kosModel = new KosModel($this->pdo); // Inisialisasi KosModel
+        $this->kosModel = new KosModel($this->pdo);
     }
 
     public function index(): void {
@@ -14,10 +16,53 @@ class KosController extends BaseController {
 
     public function daftar(): void {
         $pageTitle = "Daftar Kos Tersedia";
-        $daftar_kos_db = $this->kosModel->getAllKos('harga_per_bulan', 'ASC'); // Ambil data dari model
+
+        $searchTerm = $this->getInputGet('search_term', null, FILTER_SANITIZE_SPECIAL_CHARS);
+        $kategori = $this->getInputGet('kategori', null, FILTER_SANITIZE_SPECIAL_CHARS);
+        $minHarga = $this->getInputGet('min_harga', null, FILTER_VALIDATE_FLOAT);
+        $maxHarga = $this->getInputGet('max_harga', null, FILTER_VALIDATE_FLOAT);
+        $status = $this->getInputGet('status', null, FILTER_SANITIZE_SPECIAL_CHARS);
+        $fasilitas = $this->getInputGet('fasilitas', null, FILTER_SANITIZE_SPECIAL_CHARS); 
+
+        $currentPage = $this->getInputGet('page', 1, FILTER_VALIDATE_INT);
+        if ($currentPage < 1) {
+            $currentPage = 1;
+        }
+        $offset = ($currentPage - 1) * $this->itemsPerPage;
+
+      
+        $filterValues = [
+            'search_term' => $searchTerm,
+            'kategori' => $kategori,
+            'min_harga' => $minHarga,
+            'max_harga' => $maxHarga,
+            'status' => $status,
+            'fasilitas' => $fasilitas,
+        ];
+
+        $daftarKosDb = $this->kosModel->getAllKos($filterValues, 'harga_per_bulan', 'ASC', $this->itemsPerPage, $offset);
+        $totalFilteredKos = $this->kosModel->countAllKosFiltered($filterValues);
+        $totalPages = ceil($totalFilteredKos / $this->itemsPerPage);
+        if ($totalPages < 1) $totalPages = 1; 
+        if ($currentPage > $totalPages) $currentPage = $totalPages; 
+        
+        $filterParamsForUrl = array_filter($filterValues); 
+        $filterQueryString = '';
+        if (!empty($filterParamsForUrl)) {
+            $filterQueryString = '&' . http_build_query($filterParamsForUrl);
+        }
+       
+        $paginationBaseUrl = $this->appConfig['BASE_URL'] . 'kos/daftar'; 
 
         $data = [
-            'daftar_kos' => $daftar_kos_db,
+            'daftarKos' => $daftarKosDb,
+            'filterValues' => $filterValues, 
+            'pagination' => [
+                'currentPage' => $currentPage,
+                'totalPages' => $totalPages,
+                'baseUrl' => $paginationBaseUrl, 
+                'queryString' => $filterQueryString 
+            ]
         ];
         $this->loadView('kos/daftar', $data, $pageTitle);
     }
@@ -45,9 +90,7 @@ class KosController extends BaseController {
         }
         
         $pageTitle = "Detail: " . htmlspecialchars($kos_detail_db['nama_kos']);
-        $data = [
-            'kos' => $kos_detail_db,
-        ];
+        $data = [ 'kos' => $kos_detail_db ];
         $this->loadView('kos/detail', $data, $pageTitle);
     }
 }
