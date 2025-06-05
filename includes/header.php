@@ -257,4 +257,14 @@ if (session_status() == PHP_SESSION_NONE) {
                 </div>
         </div>
     </header>
-
+     <main class="main-content-area">
+        <div class="container">
+            <?php
+            if (isset($_SESSION['flash_message']) && is_array($_SESSION['flash_message'])) {
+                $flash = $_SESSION['flash_message'];
+                echo '<div class="flash-message ' . htmlspecialchars($flash['type'] ?? 'info') . '">';
+                echo $flash['message']; 
+                echo '</div>';
+                unset($_SESSION['flash_message']); 
+            }
+            ?>
