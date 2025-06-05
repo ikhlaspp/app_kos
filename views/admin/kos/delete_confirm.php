@@ -121,7 +121,7 @@ $color_warning_border = '#ffeeba'; // Slightly darker yellow for warning box bor
             <p><strong>ID Kos:</strong> <?php echo htmlspecialchars($kos['id'] ?? 'N/A'); ?></p>
             <p><strong>Nama Kos:</strong> <?php echo htmlspecialchars($kos['nama_kos'] ?? 'N/A'); ?></p>
             <p><strong>Alamat:</strong> <?php echo htmlspecialchars($kos['alamat'] ?? 'N/A'); ?></p>
-            <p class="attention">Perhatian: Tindakan ini tidak dapat diurungkan. Semua data terkait (misalnya booking) mungkin juga akan terhapus jika database diatur dengan ON DELETE CASCADE.</p>
+            <p class="attention">Perhatian: Tindakan ini tidak dapat diurungkan. Semua data terkait (misalnya booking) mungkin juga akan terhapus.</p>
         </div>
 
         <div class="action-buttons">

@@ -1,55 +1,55 @@
 <?php
 // ---- AWAL BLOK DEBUG ----
 // Tambahkan ini untuk melihat variabel yang di-pass dari controller
-echo "<div style='background-color: #fffacd; color: #333; padding: 15px; border: 2px solid #ffd700; margin-bottom: 20px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; position: relative; z-index: 9999;'>";
-echo "<strong>DEBUG DATA DI views/kos/daftar.php:</strong><br><br>";
+// echo "<div style='background-color: #fffacd; color: #333; padding: 15px; border: 2px solid #ffd700; margin-bottom: 20px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; position: relative; z-index: 9999;'>";
+// echo "<strong>DEBUG DATA DI views/kos/daftar.php:</strong><br><br>";
 
-echo "<strong>Isi \$pageTitle:</strong><br>";
-var_dump($pageTitle ?? 'Belum di-set oleh Controller');
-echo "<hr>";
+// echo "<strong>Isi \$pageTitle:</strong><br>";
+// var_dump($pageTitle ?? 'Belum di-set oleh Controller');
+// echo "<hr>";
 
-echo "<strong>Isi \$appConfig (hanya beberapa kunci penting):</strong><br>";
-if (isset($appConfig) && is_array($appConfig)) {
-    echo "BASE_URL: " . htmlspecialchars($appConfig['BASE_URL'] ?? 'TIDAK ADA') . "<br>";
-    echo "UPLOADS_URL_PATH: " . htmlspecialchars($appConfig['UPLOADS_URL_PATH'] ?? 'TIDAK ADA') . "<br>";
-} else {
-    echo "\$appConfig TIDAK DI-SET atau bukan array.<br>";
-}
-echo "<hr>";
+// echo "<strong>Isi \$appConfig (hanya beberapa kunci penting):</strong><br>";
+// if (isset($appConfig) && is_array($appConfig)) {
+//     echo "BASE_URL: " . htmlspecialchars($appConfig['BASE_URL'] ?? 'TIDAK ADA') . "<br>";
+//     echo "UPLOADS_URL_PATH: " . htmlspecialchars($appConfig['UPLOADS_URL_PATH'] ?? 'TIDAK ADA') . "<br>";
+// } else {
+//     echo "\$appConfig TIDAK DI-SET atau bukan array.<br>";
+// }
+// echo "<hr>";
 
-echo "<strong>Isi \$filterValues (Filter yang diterapkan):</strong><br>";
-if (isset($filterValues)) {
-    echo "<pre>"; print_r($filterValues); echo "</pre>";
-} else {
-    echo "\$filterValues TIDAK DI-SET oleh Controller.<br>";
-}
-echo "<hr>";
+// echo "<strong>Isi \$filterValues (Filter yang diterapkan):</strong><br>";
+// if (isset($filterValues)) {
+//     echo "<pre>"; print_r($filterValues); echo "</pre>";
+// } else {
+//     echo "\$filterValues TIDAK DI-SET oleh Controller.<br>";
+// }
+// echo "<hr>";
 
-echo "<strong>Isi \$daftarKos (Data Kos yang akan ditampilkan):</strong><br>";
-if (isset($daftarKos)) {
-    echo "Tipe data \$daftarKos: " . gettype($daftarKos) . "<br>";
-    if (is_array($daftarKos)) {
-        echo "Jumlah item di \$daftarKos: " . count($daftarKos) . "<br>";
-        if (count($daftarKos) > 0 && count($daftarKos) <= 5) { // Tampilkan beberapa item pertama jika tidak terlalu banyak
-            echo "Beberapa item pertama di \$daftarKos: <pre>"; print_r(array_slice($daftarKos, 0, 5)); echo "</pre>";
-        } elseif(count($daftarKos) > 5) {
-            echo "Menampilkan 5 dari " . count($daftarKos) . " item pertama: <pre>"; print_r(array_slice($daftarKos, 0, 5)); echo "</pre>";
-        }
-    } else {
-        echo "\$daftarKos bukan array.<br>";
-    }
-} else {
-    echo "\$daftarKos TIDAK DI-SET oleh Controller.<br>";
-}
-echo "<hr>";
+// echo "<strong>Isi \$daftarKos (Data Kos yang akan ditampilkan):</strong><br>";
+// if (isset($daftarKos)) {
+//     echo "Tipe data \$daftarKos: " . gettype($daftarKos) . "<br>";
+//     if (is_array($daftarKos)) {
+//         echo "Jumlah item di \$daftarKos: " . count($daftarKos) . "<br>";
+//         if (count($daftarKos) > 0 && count($daftarKos) <= 5) { // Tampilkan beberapa item pertama jika tidak terlalu banyak
+//             echo "Beberapa item pertama di \$daftarKos: <pre>"; print_r(array_slice($daftarKos, 0, 5)); echo "</pre>";
+//         } elseif(count($daftarKos) > 5) {
+//             echo "Menampilkan 5 dari " . count($daftarKos) . " item pertama: <pre>"; print_r(array_slice($daftarKos, 0, 5)); echo "</pre>";
+//         }
+//     } else {
+//         echo "\$daftarKos bukan array.<br>";
+//     }
+// } else {
+//     echo "\$daftarKos TIDAK DI-SET oleh Controller.<br>";
+// }
+// echo "<hr>";
 
-echo "<strong>Isi \$pagination (Data untuk Pagination):</strong><br>";
-if (isset($pagination)) {
-    echo "<pre>"; print_r($pagination); echo "</pre>";
-} else {
-    echo "\$pagination TIDAK DI-SET oleh Controller.<br>";
-}
-echo "</div>";
+// echo "<strong>Isi \$pagination (Data untuk Pagination):</strong><br>";
+// if (isset($pagination)) {
+//     echo "<pre>"; print_r($pagination); echo "</pre>";
+// } else {
+//     echo "\$pagination TIDAK DI-SET oleh Controller.<br>";
+// }
+// echo "</div>";
 // ---- AKHIR BLOK DEBUG ----
 
 $paletteWhite = '#FFFFFF';

@@ -40,9 +40,9 @@ if ($currentControllerSlug !== 'admin') {
 
 // Definisikan grup untuk setiap menu utama untuk perbandingan yang lebih bersih
 $isDashboardActive = ($mainActionSlug === 'dashboard');
-$isKosMenuActive = ($mainActionSlug === 'kos' || $mainActionSlug === 'koscreate' || $mainActionSlug === 'kosedit' || $mainActionSlug === 'kosdeletegambar' || $mainActionSlug === 'kosdelete'); // Gunakan huruf kecil semua untuk perbandingan karena $actionName di router juga lowercase
+$isKosMenuActive = ($mainActionSlug === 'kos'|| $mainActionSlug === 'kosCreate' || $mainActionSlug === 'kosEdit' || $mainActionSlug === 'kosDeletegambar' || $mainActionSlug === 'kosDelete'); 
 $isUsersMenuActive = ($mainActionSlug === 'users' || $mainActionSlug === 'useredit');
-$isBookingsMenuActive = ($mainActionSlug === 'bookings' || $mainActionSlug === 'bookingdetail' || $mainActionSlug === 'bookingconfirm' || $mainActionSlug === 'bookingreject');
+$isBookingsMenuActive = ($mainActionSlug === 'bookings' || $mainActionSlug === 'bookingDetail' || $mainActionSlug === 'bookingconfirm' || $mainActionSlug === 'bookingreject');
 
 // // --- DEBUG KONDISI AKTIF ---
 // echo "isDashboardActive: " . ($isDashboardActive ? 'TRUE' : 'FALSE') . "<br>";
@@ -61,9 +61,9 @@ $isBookingsMenuActive = ($mainActionSlug === 'bookings' || $mainActionSlug === '
                 <span class="menu-title">Dashboard</span>
             </a>
         </li>
-        <li class="nav-item <?php echo $isKosMenuActive ? 'active' : ''; ?>">
+        <li class="nav-item <?php echo $isKosMenuActive ? 'active': ''; ?>">
             <a class="nav-link" href="<?php echo htmlspecialchars($baseUrl . 'admin/kos'); ?>">
-                <i class="icon-layout menu-icon"></i> 
+                <i class="icon-grid menu-icon"></i>
                 <span class="menu-title">Kelola Kos</span>
             </a>
         </li>
