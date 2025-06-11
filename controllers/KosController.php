@@ -2,7 +2,7 @@
 
 class KosController extends BaseController {
     private KosModel $kosModel;
-    private int $itemsPerPage = 8;
+    private int $itemsPerPage = 6;
 
     public function __construct(PDO $pdo, array $appConfig) {
         parent::__construct($pdo, $appConfig);

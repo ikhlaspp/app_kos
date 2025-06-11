@@ -108,7 +108,6 @@ if (count($params) >= 2 && $params[0] === 'page' && is_numeric($params[1])) {
     $_GET['page'] = $params[1];
     $params = array_slice($params, 2);
 } else {
-    // If no 'page' segment is found, ensure $_GET['page'] is set to 1 for initial loads
     if (!isset($_GET['page'])) {
         $_GET['page'] = 1;
     }
@@ -118,18 +117,14 @@ if (count($params) >= 2 && $params[0] === 'page' && is_numeric($params[1])) {
 // Dispatch the request to the appropriate controller and action.
 if (class_exists($controllerName)) {
     try {
-        // Handle API routes specially if they don't follow standard controller/action pattern
-        // Example: /api/validateVoucher (if this was implemented)
-        /*
-        if ($controllerName === 'ApiController' && $actionName === 'validateVoucher') {
-            $controllerInstance = new ApiController($pdo, $appConfig);
-            $controllerInstance->validateVoucher();
-            exit;
+        // --- ADDED: API Route for Chart Data ---
+        // Handle AJAX requests for booking chart data via AdminController
+        if ($controllerName === 'AdminController' && $actionName === 'getBookingChartData') {
+            $controllerInstance = new AdminController($pdo, $appConfig);
+            $controllerInstance->getBookingChartData();
+            exit; // Terminate script after API response
         }
-        */
-        // --- ADD THIS CRITICAL DEBUG LINE ---
-        error_log("DEBUG (Index - Pre-Dispatch): Final _GET array before controller call: " . print_r($_GET, true));
-        // --- END CRITICAL DEBUG LINE --
+        // --- END ADDED ---
 
         $controllerInstance = new $controllerName($pdo, $appConfig);
 

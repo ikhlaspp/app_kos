@@ -209,4 +209,43 @@ class BookingModel {
             return 0;
         }
     }
+
+    public function getMonthlyBookingSummary(int $numMonths = 12): array {
+        $summary = [];
+        // Initialize summary for the last N months with 0 bookings
+        for ($i = $numMonths - 1; $i >= 0; $i--) {
+            $month = date('Y-m', strtotime("-$i month"));
+            $summary[$month] = 0;
+        }
+
+        $sql = "SELECT
+                    DATE_FORMAT(tanggal_pemesanan, '%Y-%m') AS month,
+                    COUNT(id) AS total_bookings
+                FROM
+                    bookings
+                WHERE
+                    status_pemesanan = 'confirmed'
+                    AND tanggal_pemesanan >= DATE_SUB(CURDATE(), INTERVAL :num_months MONTH)
+                GROUP BY
+                    month
+                ORDER BY
+                    month ASC";
+
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindParam(':num_months', $numMonths, PDO::PARAM_INT);
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Merge actual results into the initialized summary
+            foreach ($results as $row) {
+                $summary[$row['month']] = (int)$row['total_bookings'];
+            }
+            return $summary;
+
+        } catch (PDOException $e) {
+            error_log("BookingModel::getMonthlyBookingSummary Error: " . $e->getMessage());
+            return []; // Return empty array on failure
+        }
+    }
 }

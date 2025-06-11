@@ -19,7 +19,7 @@ $paletteWhite = '#FFFFFF';
 $paletteLightBlue = '#E9F1F7';
 $paletteMediumBlue = '#4A90E2';
 $paletteDarkBlue = '#1A3A5B';
-$paletteTextPrimary = '#0D2A57'; // Main text color (intended for form fields)
+$paletteTextPrimary = '#000000'; // Main text color (intended for form fields)
 $paletteTextSecondary = '#555555'; // Secondary text color
 
 // Define theme colors for buttons and highlights
@@ -41,6 +41,7 @@ $warningText = '#856404';
     /* General styles for form elements */
     .form-control, .form-select, .input-group-text {
         border-radius: 0.25rem;
+        color: <?php echo htmlspecialchars($paletteTextPrimary); ?>;
     }
     .form-label {
         color: <?php echo htmlspecialchars($paletteTextPrimary); ?>;

@@ -12,10 +12,10 @@ $paletteTextSecondary = '#555555'; // Secondary text color (e.g., address)
 $paletteAccentBlue = '#6A9EFF'; // For lighter blue accents if needed
 
 // Status Colors - map to your palette or similar
-$statusSuccess = '#28a745';   // Green for available
-$statusWarning = '#ffc107';   // Yellow for pending/maintenance
-$statusDanger = '#dc3545';    // Red for booked/rejected
-$statusInfo = '#17a2b8';      // Teal/Light Blue for completed
+$statusSuccess = '#28a745';    // Green for available
+$statusWarning = '#ffc107';    // Yellow for pending/maintenance
+$statusDanger = '#dc3545';     // Red for booked/rejected
+$statusInfo = '#17a2b8';       // Teal/Light Blue for completed
 
 // Helper to adjust color brightness (used for borders/accents)
 function adjustBrightness($hex, $steps) {
@@ -66,7 +66,13 @@ function adjustBrightness($hex, $steps) {
         border-radius: 6px;
         border: 1px solid <?php echo htmlspecialchars(adjustBrightness($paletteLightBlue, -10)); ?>;
         margin-bottom: 10px;
+        cursor: pointer; /* Indicate it's clickable */
+        transition: transform 0.2s ease-in-out; /* Add transition for hover effect */
     }
+    .kos-gallery img:hover {
+        transform: scale(1.03); /* Slightly enlarge on hover */
+    }
+
     .kos-main-image {
         width: 100%;
         max-height: 400px; /* Max height for main image */
@@ -193,6 +199,109 @@ function adjustBrightness($hex, $steps) {
             margin-left: 5px;
         }
     }
+
+    /* --- New Modal Styles (added for image pop-up with zoom/pan) --- */
+    .image-modal {
+        display: none; /* Changed from display: flex; to display: none; */
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.9);
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .image-modal-content-wrapper {
+        position: relative; /* For positioning zoom controls */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+    }
+
+    .image-modal-content {
+        display: block;
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain; /* Ensure the whole image fits within the bounds */
+        transform: scale(1); /* Initial scale */
+        transition: transform 0.2s ease-out; /* Smooth zoom transition */
+        cursor: grab; /* Indicate draggable */
+    }
+    
+    .image-modal-content.grabbing {
+        cursor: grabbing;
+    }
+
+    .image-modal-close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        transition: 0.3s;
+        cursor: pointer;
+        z-index: 1001; /* Above other modal elements */
+    }
+
+    .image-modal-close:hover,
+    .image-modal-close:focus {
+        color: #bbb;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .zoom-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.5);
+        border-radius: 5px;
+        padding: 8px 15px;
+        display: flex;
+        gap: 10px;
+        z-index: 1001; /* Above image */
+    }
+
+    .zoom-controls button {
+        background: none;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: white;
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .zoom-controls button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-color: white;
+    }
+
+    @media (max-width: 767.98px) {
+        .zoom-controls {
+            bottom: 10px;
+            padding: 5px 10px;
+            gap: 5px;
+        }
+        .zoom-controls button {
+            font-size: 20px;
+            width: 35px;
+            height: 35px;
+        }
+    }
 </style>
 
 <div class="container">
@@ -208,16 +317,16 @@ function adjustBrightness($hex, $steps) {
                                 <div class="kos-gallery d-flex flex-wrap justify-content-start">
                                     <?php foreach ($kos['gambar_kos'] as $gambar): ?>
                                         <img src="<?php echo htmlspecialchars($appConfig['UPLOADS_URL_PATH'] . $gambar['path']); ?>"
-                                            alt="<?php echo htmlspecialchars($gambar['nama_file']); ?>"
-                                            class="kos-gallery-img">
+                                             alt="<?php echo htmlspecialchars($gambar['nama_file']); ?>"
+                                             class="kos-gallery-img">
                                     <?php endforeach; ?>
                                 </div>
                             </div>
                         <?php elseif (!empty($kos['gambar_utama'])): /* This case should theoretically not be hit if gambar_kos is populated */ ?>
                             <div class="col-12">
                                 <img src="<?php echo htmlspecialchars($appConfig['ASSETS_URL'] . 'images/' . $kos['gambar_utama']); ?>"
-                                    alt="Gambar <?php echo htmlspecialchars($kos['nama_kos']); ?>"
-                                    class="kos-main-image">
+                                     alt="Gambar <?php echo htmlspecialchars($kos['nama_kos']); ?>"
+                                     class="kos-main-image">
                             </div>
                         <?php else: ?>
                             <div class="col-12">
@@ -238,9 +347,9 @@ function adjustBrightness($hex, $steps) {
                                     $status_kos_view = $kos['status_kos'] ?? 'maintenance';
                                     $statusClass = '';
                                     switch ($status_kos_view) {
-                                        case 'available': $statusClass = 'bg-success'; break;
-                                        case 'booked': $statusClass = 'bg-danger'; break;
-                                        case 'maintenance': $statusClass = 'bg-warning text-dark'; break;
+                                        case 'available': $statusClass = 'bg-available'; break;
+                                        case 'booked': $statusClass = 'bg-booked'; break;
+                                        case 'maintenance': $statusClass = 'bg-maintenance'; break;
                                         default: $statusClass = 'bg-secondary'; break;
                                     }
                                 ?>
@@ -286,3 +395,138 @@ function adjustBrightness($hex, $steps) {
         </div>
     </div>
 </div>
+
+<div id="imageModal" class="image-modal">
+    <span class="image-modal-close">&times;</span>
+    <div class="image-modal-content-wrapper">
+        <img class="image-modal-content" id="modalImage">
+        <div class="zoom-controls">
+            <button id="zoomOutBtn">-</button>
+            <button id="zoomInBtn">+</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get the modal elements
+    var modal = document.getElementById("imageModal");
+    var modalImg = document.getElementById("modalImage");
+    var closeBtn = document.getElementsByClassName("image-modal-close")[0];
+    var zoomInBtn = document.getElementById("zoomInBtn");
+    var zoomOutBtn = document.getElementById("zoomOutBtn");
+
+    // Get all images with the class 'kos-gallery-img'
+    var galleryImages = document.querySelectorAll(".kos-gallery-img");
+
+    // Current zoom level and position for panning
+    var currentZoom = 1;
+    var minZoom = 0.5; // Minimum zoom out level
+    var maxZoom = 3;   // Maximum zoom in level
+    var zoomStep = 0.2; // How much to zoom per click
+
+    var isDragging = false;
+    var startX, startY;
+    var currentX = 0, currentY = 0; // Current translation (pan position)
+
+    // Function to apply zoom and translation (pan)
+    function applyTransform() {
+        modalImg.style.transform = `scale(${currentZoom}) translate(${currentX}px, ${currentY}px)`;
+    }
+
+    // Reset zoom and position when opening a new image
+    function resetImageState() {
+        currentZoom = 1;
+        currentX = 0;
+        currentY = 0;
+        applyTransform();
+    }
+
+    // Loop through each gallery image and add an onclick event listener
+    galleryImages.forEach(function(img) {
+        img.onclick = function() {
+            modal.style.display = "flex"; // Make modal visible and use flex for centering
+            modalImg.src = this.src; // Set the source of the large image
+            
+            // Reset zoom and position for the new image
+            resetImageState();
+        }
+    });
+
+    // When the user clicks on the close button (x), hide the modal
+    closeBtn.onclick = function() {
+        modal.style.display = "none";
+    }
+
+    // When the user clicks anywhere outside of the image (on the modal background), hide the modal
+    modal.onclick = function(event) {
+        // Only close if click is on the modal overlay itself, not on the image or controls
+        if (event.target == modal || event.target.classList.contains('image-modal-content-wrapper')) { 
+            modal.style.display = "none";
+        }
+    }
+
+    // Zoom in functionality
+    zoomInBtn.onclick = function() {
+        if (currentZoom < maxZoom) {
+            currentZoom = Math.min(maxZoom, currentZoom + zoomStep);
+            applyTransform();
+        }
+    }
+
+    // Zoom out functionality
+    zoomOutBtn.onclick = function() {
+        if (currentZoom > minZoom) {
+            currentZoom = Math.max(minZoom, currentZoom - zoomStep);
+            applyTransform();
+        }
+    }
+
+    // --- Drag/Pan functionality for the image ---
+    modalImg.addEventListener('mousedown', (e) => {
+        // Only allow dragging if the image is actually zoomed in
+        if (currentZoom > 1) { 
+            isDragging = true;
+            modalImg.classList.add('grabbing'); // Change cursor style
+            // Calculate initial offset from image's current position
+            const transform = modalImg.style.transform;
+            const match = transform.match(/translate\(([-\d.]+)px, ([-\d.]+)px\)/);
+            if (match) {
+                currentX = parseFloat(match[1]);
+                currentY = parseFloat(match[2]);
+            }
+            startX = e.clientX - currentX;
+            startY = e.clientY - currentY;
+            e.preventDefault(); // Prevent default browser drag behavior
+        }
+    });
+
+    modalImg.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        currentX = e.clientX - startX;
+        currentY = e.clientY - startY;
+        applyTransform();
+    });
+
+    modalImg.addEventListener('mouseup', () => {
+        isDragging = false;
+        modalImg.classList.remove('grabbing');
+    });
+
+    modalImg.addEventListener('mouseleave', () => {
+        isDragging = false;
+        modalImg.classList.remove('grabbing');
+    });
+
+    // Optional: Mouse wheel zoom
+    modalImg.addEventListener('wheel', (e) => {
+        e.preventDefault(); // Prevent page scroll
+        const scaleAmount = e.deltaY * -0.005; // Adjust sensitivity for smoother scroll zoom
+        const newZoom = currentZoom + scaleAmount;
+
+        if (newZoom >= minZoom && newZoom <= maxZoom) {
+            currentZoom = newZoom;
+            applyTransform();
+        }
+    });
+
+</script>

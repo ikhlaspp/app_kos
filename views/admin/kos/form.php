@@ -189,6 +189,77 @@ $kos = $kos ?? []; // Ensure $kos is an array
             text-decoration: underline;
             color: <?php echo $palette_dark_blue; ?>;
         }
+
+        /* --- New Modal Styles for Delete Confirmation --- */
+        .modal {
+            display: none; /* Changed to none, so it's hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            /* The following two lines will still apply when JS changes display to 'flex' */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 25px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px; /* Max width for the modal */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: <?php echo $color_primary_text_heading; ?>;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.85;
+        }
+
+        .modal-btn-confirm {
+            background-color: #dc3545; /* Red for confirm delete */
+            color: white;
+        }
+
+        .modal-btn-cancel {
+            background-color: #6c757d; /* Gray for cancel */
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -255,9 +326,9 @@ $kos = $kos ?? []; // Ensure $kos is an array
                             <img src="<?php echo htmlspecialchars(($appConfig['UPLOADS_URL_PATH'] ?? 'uploads/') . ($gambar['path'] ?? 'placeholder.jpg')); ?>"
                                  alt="<?php echo htmlspecialchars($gambar['nama_file'] ?? 'Gambar Kos'); ?>">
                             <p class="filename" title="<?php echo htmlspecialchars($gambar['nama_file'] ?? 'Nama File Tidak Tersedia'); ?>"><?php echo htmlspecialchars($gambar['nama_file'] ?? 'N/A'); ?></p>
-                            <a href="<?php echo htmlspecialchars(($appConfig['BASE_URL'] ?? './') . 'admin/kosDeleteGambar/' . ($gambar['id'] ?? '0') . '/' . ($kos['id'] ?? '0')); ?>"
-                               onclick="return confirm('Anda yakin ingin menghapus gambar ini?');"
-                               class="delete-image-link">Hapus Gambar</a>
+                            <a href="#"
+                               data-delete-url="<?php echo htmlspecialchars(($appConfig['BASE_URL'] ?? './') . 'admin/kosDeleteGambar/' . ($gambar['id'] ?? '0') . '/' . ($kos['id'] ?? '0')); ?>"
+                               class="delete-image-link open-delete-modal">Hapus Gambar</a>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -276,5 +347,53 @@ $kos = $kos ?? []; // Ensure $kos is an array
             </div>
         </form>
     </div>
+
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Konfirmasi Hapus Gambar</h3>
+            <p>Anda yakin ingin menghapus gambar ini?</p>
+            <div class="modal-buttons">
+                <button id="confirmDeleteBtn" class="modal-btn modal-btn-confirm">Hapus</button>
+                <button id="cancelDeleteBtn" class="modal-btn modal-btn-cancel">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- JavaScript for Delete Confirmation Modal ---
+        const deleteModal = document.getElementById('deleteConfirmModal');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const deleteLinks = document.querySelectorAll('.open-delete-modal');
+
+        let currentDeleteUrl = ''; // To store the URL for the clicked delete link
+
+        deleteLinks.forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent the default link behavior
+                currentDeleteUrl = this.dataset.deleteUrl; // Get the URL from data-delete-url
+                deleteModal.style.display = 'flex'; // Show the modal
+            });
+        });
+
+        // Handle confirm button click
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (currentDeleteUrl) {
+                window.location.href = currentDeleteUrl; // Redirect to the delete URL
+            }
+        });
+
+        // Handle cancel button click and outside modal click
+        cancelDeleteBtn.addEventListener('click', function() {
+            deleteModal.style.display = 'none'; // Hide the modal
+        });
+
+        deleteModal.addEventListener('click', function(event) {
+            // If clicked directly on the modal background (not on the content inside)
+            if (event.target === deleteModal) {
+                deleteModal.style.display = 'none'; // Hide the modal
+            }
+        });
+    </script>
 </body>
 </html>

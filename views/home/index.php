@@ -341,7 +341,7 @@ $baseUrl = $appConfig['BASE_URL'] ?? './';
                     <i class="fas fa-tags"></i>
                     <h5 class="card-title">Promo & Informasi Terbaru</h5>
                     <p class="card-text">Jangan lewatkan promo menarik dan informasi penting lainnya seputar dunia kos.</p>
-                    <a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>" class="btn btn-outline-custom mt-auto">Cek Promo</a>
+                    <a href="<?php echo htmlspecialchars($baseUrl . 'user/dashboard'); ?>" class="btn btn-outline-custom mt-auto">Cek Promo</a>
                 </div>
             </div>
         </div>
@@ -403,7 +403,7 @@ $baseUrl = $appConfig['BASE_URL'] ?? './';
         <div class="container">
             <h3><i class="fas fa-gift me-2"></i> Dapatkan Diskon Spesial!</h3>
             <p class="my-3">Daftar sekarang dan dapatkan diskon hingga 20% untuk booking pertama Anda. Jangan sampai ketinggalan!</p>
-            <a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>" class="btn btn-promo">Klaim Diskon</a>
+            <a href="<?php echo htmlspecialchars($baseUrl . 'user/dashboard'); ?>" class="btn btn-promo">Klaim Diskon</a>
         </div>
     </section>
 </div>

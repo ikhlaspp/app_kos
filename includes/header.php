@@ -31,7 +31,7 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding-top: 60px;
+            padding-top: 60px; /* Adjust based on your header height */
         }
         .page-wrapper {
             flex: 1 0 auto;
@@ -43,7 +43,7 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
             padding: 12px 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
             position: fixed;
-            top: 0 !important;
+            top: 0;
             left: 0;
             right: 0;
             width: 100%;
@@ -70,6 +70,7 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
             line-height: 1;
         }
 
+        /* Default (desktop) navigation styles */
         .main-navigation {
             margin-left: 25px;
         }
@@ -115,10 +116,13 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
         .header-icons .icon-link:hover {
             color: #DBE2EF;
         }
+
+        /* Hide hamburger by default on larger screens */
         .hamburger-menu-placeholder {
-            display: none !important;
+            display: none;
         }
 
+        /* Login/Logout link outside hamburger (desktop) */
         .header-auth-link {
             color: #F9F7F7;
             text-decoration: none;
@@ -139,44 +143,65 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
             border-color: #3F72AF;
         }
 
+        /* Mobile Styles (<= 992px) */
         @media (max-width: 992px) {
             .main-navigation {
+                /* Initially hidden on mobile, will be toggled by JS */
                 display: none;
                 position: absolute;
-                top: 100%;
+                top: 100%; /* Position below header */
                 left: 0;
                 right: 0;
                 background-color: #112D4E;
                 box-shadow: 0 8px 16px rgba(0,0,0,0.15);
                 z-index: 999;
                 padding: 8px 0;
+                margin-left: 0; /* Remove default margin */
             }
             .main-navigation.open {
-                display: block;
+                display: block; /* Show when 'open' class is present */
             }
-            .main-navigation.open ul {
-                flex-direction: column;
-                width: 100%;
+            .main-navigation ul {
+                flex-direction: column; /* Stack menu items vertically */
+                width: 100%; /* Ensure ul takes full width of nav */
             }
-            .main-navigation.open ul li {
+            .main-navigation ul li {
                 text-align: center;
-                width: 100%;
+                width: 100%; /* Ensure list items take full width */
             }
-            .main-navigation.open ul li a {
+            .main-navigation ul li a {
                 padding: 12px 15px;
                 border-top: 1px solid #3F72AF;
                 border-radius: 0;
             }
-            .main-navigation.open ul li:first-child a {
+            .main-navigation ul li:first-child a {
                 border-top: none;
             }
-            .main-navigation.open ul li a:hover,
-            .main-navigation.open ul li.active a {
+            .main-navigation ul li a:hover,
+            .main-navigation ul li.active a {
                 background-color: #3F72AF;
                 color: #FFFFFF;
             }
+
+            /* Show hamburger on mobile screens */
             .hamburger-menu-placeholder {
-                display: block !important;
+                display: block;
+            }
+
+            /* Hide the desktop login/logout link on mobile */
+            .header-icons .header-auth-link {
+                display: none;
+            }
+
+            /* Style the login/logout link when it's inside the mobile menu */
+            .main-navigation.open .header-auth-link {
+                display: block; /* Make sure it's visible when menu is open */
+                width: 100%; /* Full width */
+                margin-left: 0; /* Remove left margin */
+                text-align: center; /* Center text */
+                padding: 12px 15px; /* Adjust padding to match other menu items */
+                border-top: 1px solid #3F72AF; /* Add a border for separation */
+                border-radius: 0; /* Remove border-radius */
             }
         }
 
@@ -226,19 +251,20 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
                         <?php else: ?>
                             <li><a href="<?php echo htmlspecialchars($baseUrl); ?>">Home</a></li>
                             <li><a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>">Daftar Kos</a></li>
-                            <li><li><a href="<?php echo htmlspecialchars($baseUrl . 'home/about'); ?>">Tentang</a></li>
+                            <li><a href="<?php echo htmlspecialchars($baseUrl . 'home/about'); ?>">Tentang</a></li>
+                        <?php endif; ?>
+
+                        <?php if (isset($_SESSION['user_id'])): ?>
+                            <?php $userNameDisplay = $_SESSION['user_nama'] ?? ($_SESSION['is_admin'] ? 'Admin' : 'User'); ?>
+                            <li><a href="<?php echo htmlspecialchars($baseUrl . 'auth/logout'); ?>" class="header-auth-link">Logout (<?php echo htmlspecialchars($userNameDisplay); ?>)</a></li>
+                        <?php else: ?>
+                            <li><a href="<?php echo htmlspecialchars($baseUrl . 'auth/login'); ?>" class="header-auth-link">Login</a></li>
                         <?php endif; ?>
                     </ul>
                 </nav>
 
                 <div class="header-icons">
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <?php $userNameDisplay = $_SESSION['user_nama'] ?? ($_SESSION['is_admin'] ? 'Admin' : 'User'); ?>
-                        <a href="<?php echo htmlspecialchars($baseUrl . 'auth/logout'); ?>" class="header-auth-link">Logout (<?php echo htmlspecialchars($userNameDisplay); ?>)</a>
-                    <?php else: ?>
-                        <a href="<?php echo htmlspecialchars($baseUrl . 'auth/login'); ?>" class="header-auth-link">Login</a>
-                    <?php endif; ?>
-                    <a href="#" class="icon-link hamburger-menu-placeholder" id="hamburgerIcon" aria-label="Menu">&#9776;</a>
+                    <a href="#" class="icon-link hamburger-menu-placeholder" id="hamburgerIcon" aria-label="Menu" aria-controls="mainNav" aria-expanded="false">&#9776;</a>
                 </div>
             </div>
         </header>
@@ -254,3 +280,46 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
                     unset($_SESSION['flash_message']);
                 }
                 ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const hamburgerIcon = document.getElementById('hamburgerIcon');
+        const mainNav = document.getElementById('mainNav');
+
+        if (hamburgerIcon && mainNav) {
+            hamburgerIcon.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent default anchor behavior
+
+                // Toggle the 'open' class on the navigation
+                mainNav.classList.toggle('open');
+
+                // Toggle aria-expanded attribute for accessibility
+                let isExpanded = mainNav.classList.contains('open');
+                hamburgerIcon.setAttribute('aria-expanded', isExpanded);
+            });
+
+            // Close the navigation when clicking outside of it
+            document.addEventListener('click', function(event) {
+                // If the click is not on the navigation itself AND not on the hamburger icon
+                if (!mainNav.contains(event.target) && !hamburgerIcon.contains(event.target)) {
+                    if (mainNav.classList.contains('open')) {
+                        mainNav.classList.remove('open');
+                        hamburgerIcon.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+
+            // Optional: Close menu if a navigation link is clicked (useful for single-page apps or smooth transitions)
+            mainNav.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    // Only close if the menu is currently open
+                    if (mainNav.classList.contains('open')) {
+                        mainNav.classList.remove('open');
+                        hamburgerIcon.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            });
+        }
+    });
+</script>
+</body>
+</html>

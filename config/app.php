@@ -16,7 +16,7 @@ if (!function_exists('get_dynamic_base_url')) {
 }
 
 $appConfig = [
-    'APP_NAME'          => 'Sistem Booking Kos ', 
+    'APP_NAME'          => 'STECU KOST', 
     'APP_ENV'           => 'development',
     'BASE_URL'          => get_dynamic_base_url(),
     'ROOT_PATH'         => dirname(__DIR__),

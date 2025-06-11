@@ -180,9 +180,6 @@ $twitterUrl = $appConfig['TWITTER_URL'] ?? '#';
                     <li><a href="<?php echo htmlspecialchars($baseUrl); ?>">Beranda</a></li>
                     <li><a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>">Daftar Kos</a></li>
                     <li><a href="<?php echo htmlspecialchars($baseUrl . 'home/about'); ?>">Tentang Kami</a></li>
-                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'kebijakan-privasi'); ?>">Kebijakan Privasi</a></li>
-                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'syarat-ketentuan'); ?>">Syarat & Ketentuan</a></li>
-                    <li><a href="<?php echo htmlspecialchars($baseUrl . 'faq'); ?>">FAQ</a></li>
                 </ul>
             </div>
 

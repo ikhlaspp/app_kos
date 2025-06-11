@@ -1,11 +1,12 @@
 <?php
-// File: nama_proyek_kos/controllers/AdminController.php
+// File: controllers/AdminController.php
 
 class AdminController extends BaseController {
     private KosModel $kosModel;
     private UserModel $userModel;
     private BookingModel $bookingModel;
-    private LogAuditModel $logAuditModel; // Pastikan class LogAuditModel sudah ada dan di-autoload
+    private LogAuditModel $logAuditModel;
+    private VoucherModel $voucherModel; // ADDED: VoucherModel declaration
 
     public function __construct(PDO $pdo, array $appConfig) {
         parent::__construct($pdo, $appConfig);
@@ -14,37 +15,34 @@ class AdminController extends BaseController {
         $this->kosModel = new KosModel($this->pdo);
         $this->userModel = new UserModel($this->pdo);
         $this->bookingModel = new BookingModel($this->pdo);
-        if (class_exists('LogAuditModel')) { // Cek jika class LogAuditModel ada sebelum membuat instance
-           $this->logAuditModel = new LogAuditModel($this->pdo);
+        $this->voucherModel = new VoucherModel($this->pdo); // ADDED: VoucherModel initialization
+
+        if (class_exists('LogAuditModel')) {
+            $this->logAuditModel = new LogAuditModel($this->pdo);
         } else {
-            // Fallback atau error jika LogAuditModel tidak ditemukan, agar tidak fatal error
-            // error_log("Peringatan: Class LogAuditModel tidak ditemukan. Fitur log audit tidak akan aktif.");
-            // Anda bisa membuat dummy LogAuditModel jika ingin menghindari error jika file tidak ada.
-            // Untuk sekarang, kita biarkan, tapi pastikan file LogAuditModel.php ada.
+            error_log("Peringatan: Class LogAuditModel tidak ditemukan. Fitur log audit tidak akan aktif.");
         }
     }
 
-     protected function loadAdminView(string $viewName, array $data = [], ?string $pageTitle = null): void {
-        // Data yang akan di-extract di layout_admin.php dan view spesifik
-        $data['appConfig'] = $this->appConfig; // Pastikan appConfig tersedia untuk layout
-        $data['pageTitle'] = $pageTitle ?? ($data['pageTitle'] ?? 'Admin Panel'); // pageTitle untuk layout
-        $data['contentView'] = 'admin/' . $viewName; // Path ke view konten spesifik relatif dari folder views/
+    protected function loadAdminView(string $viewName, array $data = [], ?string $pageTitle = null): void {
+        $data['appConfig'] = $this->appConfig;
+        $data['pageTitle'] = $pageTitle ?? ($data['pageTitle'] ?? 'Admin Panel');
+        $data['contentView'] = 'admin/' . $viewName;
 
-        // Path ke file layout admin
         $layoutAdminPath = $this->appConfig['VIEWS_PATH'] . 'admin/layout_admin.php';
 
         if (file_exists($layoutAdminPath)) {
-            extract($data); // Extract semua data agar tersedia di layout_admin.php
+            extract($data);
             require_once $layoutAdminPath;
         } else {
-            // Fallback jika layout admin tidak ditemukan
+            http_response_code(500);
+            error_log("Error: File layout admin tidak ditemukan: " . $layoutAdminPath);
             echo "Error: File layout admin tidak ditemukan.";
-            // Mungkin redirect ke halaman error atau dashboard standar
         }
     }
 
     private function _checkAdmin(): void {
-        if (!isset($_SESSION['user_id']) || !isset($_SESSION['is_admin']) || $_SESSION['is_admin'] !== true) {
+        if (!$this->isLoggedIn() || !$this->isAdmin()) {
             $this->setFlashMessage("Anda tidak memiliki hak akses ke halaman admin.", "error");
             if (isset($_SESSION['user_id'])) {
                 $this->redirect(''); 
@@ -64,7 +62,7 @@ class AdminController extends BaseController {
         $recentConfirmedBookings = $this->bookingModel->getRecentConfirmedBookings(5) ?? [];
         
         $recentLogs = [];
-        if (isset($this->logAuditModel)) { // Hanya panggil jika modelnya ada
+        if (isset($this->logAuditModel)) {
             $recentLogs = $this->logAuditModel->getRecentLogs(7) ?? [];
         }
 
@@ -79,11 +77,30 @@ class AdminController extends BaseController {
         $this->loadAdminView('dashboard', $data, $pageTitle); 
     }
 
+    // --- NEW: API endpoint for chart data ---
+    public function getBookingChartData(): void {
+        header('Content-Type: application/json');
+
+        $numMonths = $this->getInputGet('months', 12, FILTER_VALIDATE_INT);
+        if ($numMonths < 1) $numMonths = 12;
+
+        $monthlySummary = $this->bookingModel->getMonthlyBookingSummary($numMonths);
+
+        $labels = array_keys($monthlySummary);
+        $data = array_values($monthlySummary);
+
+        echo json_encode([
+            'labels' => $labels,
+            'data' => $data
+        ]);
+        exit;
+    }
+    // --- END NEW ---
+
     // --- KOS CRUD ---
     public function kos(): void { 
         $pageTitle = "Manajemen Data Kos";
 
-        // Ambil parameter filter dan search dari GET request
         $filterValues = [
             'search_term' => $this->getInputGet('search_term', null, FILTER_SANITIZE_SPECIAL_CHARS),
             'kategori'    => $this->getInputGet('kategori', null, FILTER_SANITIZE_SPECIAL_CHARS),
@@ -92,25 +109,19 @@ class AdminController extends BaseController {
             'status'      => $this->getInputGet('status', null, FILTER_SANITIZE_SPECIAL_CHARS),
             'fasilitas'   => $this->getInputGet('fasilitas', null, FILTER_SANITIZE_SPECIAL_CHARS),
         ];
-        // Bersihkan nilai filter yang kosong agar tidak dianggap sebagai filter aktif jika tidak perlu
         foreach ($filterValues as $key => $value) {
             if ($value === '') {
                 $filterValues[$key] = null;
             }
         }
 
-        $currentPage = $this->getInputGet('page', 1, FILTER_VALIDATE_INT);
+        $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+
         if ($currentPage < 1) $currentPage = 1;
         
-        $itemsPerPage = 10; // Atau ambil dari konfigurasi
+        $itemsPerPage = 10;
         $offset = ($currentPage - 1) * $itemsPerPage;
 
-        // --- PERBAIKAN PEMANGGILAN getAllKos ---
-        // Argumen pertama adalah array $filterValues
-        // Argumen kedua adalah kolom untuk orderBy (default 'id')
-        // Argumen ketiga adalah arah orderDir (default 'ASC')
-        // Argumen keempat adalah limit
-        // Argumen kelima adalah offset
         $daftarKos = $this->kosModel->getAllKos($filterValues, 'id', 'ASC', $itemsPerPage, $offset);
         
         $totalFilteredKos = $this->kosModel->countAllKosFiltered($filterValues);
@@ -124,9 +135,9 @@ class AdminController extends BaseController {
         $paginationBaseUrl = $this->appConfig['BASE_URL'] . 'admin/kos';
 
         $data = [
-            'daftarKos'     => $daftarKos,
-            'filterValues'  => $filterValues,
-            'pagination'    => [
+            'daftarKos'    => $daftarKos,
+            'filterValues' => $filterValues,
+            'pagination'   => [
                 'currentPage'   => $currentPage,
                 'totalPages'    => $totalPages,
                 'baseUrl'       => $paginationBaseUrl,
@@ -140,7 +151,7 @@ class AdminController extends BaseController {
     private function _handleImageUploads(int $kosId, array $filesData, string $uploadDirFs): array {
         $uploadedImageInfo = [];
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $maxSize = 5 * 1024 * 1024; // 5MB
+        $maxSize = 5 * 1024 * 1024;
 
         if (!is_dir($uploadDirFs)) {
             if (!mkdir($uploadDirFs, 0775, true)) {
@@ -149,8 +160,8 @@ class AdminController extends BaseController {
             }
         }
         if (!is_writable($uploadDirFs)) {
-             $this->setFlashMessage("Error: Direktori upload ({$uploadDirFs}) tidak dapat ditulis. Periksa izin.", "error");
-             return $uploadedImageInfo;
+            $this->setFlashMessage("Error: Direktori upload ({$uploadDirFs}) tidak dapat ditulis. Periksa izin.", "error");
+            return $uploadedImageInfo;
         }
 
         if (isset($filesData['name']) && is_array($filesData['name'])) {
@@ -206,12 +217,13 @@ class AdminController extends BaseController {
                 'harga_per_bulan' => filter_input(INPUT_POST, 'harga_per_bulan', FILTER_VALIDATE_FLOAT),
                 'fasilitas_kos' => trim(strip_tags($_POST['fasilitas_kos'] ?? '')),
                 'jumlah_kamar_total' => filter_input(INPUT_POST, 'jumlah_kamar_total', FILTER_VALIDATE_INT),
-                'pemilik_id' => (int)($_SESSION['user_id'] ?? null) // Admin yang membuat adalah pemilik awal, atau tambahkan field di form
+                'kategori' => $this->getInputPost('kategori', null, FILTER_SANITIZE_SPECIAL_CHARS),
+                'status_kos' => $this->getInputPost('status_kos', null, FILTER_SANITIZE_SPECIAL_CHARS)
             ];
             $errors = [];
             if (empty($kosDataInput['nama_kos'])) $errors[] = "Nama kos wajib diisi.";
             if (empty($kosDataInput['alamat'])) $errors[] = "Alamat wajib diisi.";
-            if ($kosDataInput['harga_per_bulan'] === null || $kosDataInput['harga_per_bulan'] === false || $kosDataInput['harga_per_bulan'] <= 0) $errors[] = "Harga per bulan tidak valid.";
+            if ($kosDataInput['harga_per_bulan'] === null || $kosDataInput['harga_per_bulan'] === false || $kosDataInput['harga_per_bulan'] <= 0) { $errors[] = "Harga per bulan tidak valid."; }
             if ($kosDataInput['jumlah_kamar_total'] === null || $kosDataInput['jumlah_kamar_total'] === false || $kosDataInput['jumlah_kamar_total'] < 0) {
                 $errors[] = "Jumlah kamar total tidak valid (minimal 0).";
             }
@@ -230,7 +242,7 @@ class AdminController extends BaseController {
                     }
                     $this->setFlashMessage("Data kos baru berhasil ditambahkan.", "success");
                     $this->redirect('admin/kos'); 
-                    return; // Penting: Hentikan eksekusi setelah redirect
+                    return;
                 } else { 
                     $this->setFlashMessage("Gagal menambahkan data kos ke database.", "error");
                 }
@@ -247,36 +259,35 @@ class AdminController extends BaseController {
         if ($kos_id_filtered === false || $kos_id_filtered <= 0) { $this->setFlashMessage("ID Kos tidak valid.", "error"); $this->redirect('admin/kos'); return; }
         $kos = $this->kosModel->getKosById($kos_id_filtered);
         if (!$kos) { $this->setFlashMessage("Kos dengan ID {$id} tidak ditemukan.", "error"); $this->redirect('admin/kos'); return; }
-
+        
         $pageTitle = "Edit Data Kos: " . htmlspecialchars($kos['nama_kos']);
         $viewName = 'admin/kos/form';
         $dataForView = ['formAction' => $this->appConfig['BASE_URL'] . 'admin/kosEdit/' . $kos['id'], 'kos' => $kos, 'mode' => 'edit', 'pageTitle' => $pageTitle];
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $updateData = [
-                 'nama_kos' => trim(strip_tags($_POST['nama_kos'] ?? '')),
-                 'alamat' => trim(strip_tags($_POST['alamat'] ?? '')),
-                 'deskripsi' => trim(strip_tags($_POST['deskripsi'] ?? '')),
-                 'harga_per_bulan' => filter_input(INPUT_POST, 'harga_per_bulan', FILTER_VALIDATE_FLOAT),
-                 'fasilitas_kos' => trim(strip_tags($_POST['fasilitas_kos'] ?? '')),
-                 'jumlah_kamar_total' => filter_input(INPUT_POST, 'jumlah_kamar_total', FILTER_VALIDATE_INT),
-                 'jumlah_kamar_tersedia' => filter_input(INPUT_POST, 'jumlah_kamar_tersedia', FILTER_VALIDATE_INT),
-                 'status_kos' => trim(strip_tags($_POST['status_kos'] ?? $kos['status_kos'])),
-                 'pemilik_id' => filter_input(INPUT_POST, 'pemilik_id', FILTER_VALIDATE_INT) ?? $kos['pemilik_id'],
+                'nama_kos' => trim(strip_tags($_POST['nama_kos'] ?? '')),
+                'alamat' => trim(strip_tags($_POST['alamat'] ?? '')),
+                'deskripsi' => trim(strip_tags($_POST['deskripsi'] ?? '')),
+                'harga_per_bulan' => filter_input(INPUT_POST, 'harga_per_bulan', FILTER_VALIDATE_FLOAT),
+                'fasilitas_kos' => trim(strip_tags($_POST['fasilitas_kos'] ?? '')),
+                'jumlah_kamar_total' => filter_input(INPUT_POST, 'jumlah_kamar_total', FILTER_VALIDATE_INT),
+                'jumlah_kamar_tersedia' => filter_input(INPUT_POST, 'jumlah_kamar_tersedia', FILTER_VALIDATE_INT),
+                'status_kos' => trim(strip_tags($_POST['status_kos'] ?? $kos['status_kos'])),
+                'kategori' => $this->getInputPost('kategori', null, FILTER_SANITIZE_SPECIAL_CHARS)
             ];
             $errors = [];
             if (empty($updateData['nama_kos'])) $errors[] = "Nama kos wajib diisi.";
-            if ($updateData['harga_per_bulan'] === null || $updateData['harga_per_bulan'] === false || $updateData['harga_per_bulan'] <=0) $errors[] = "Harga tidak valid.";
-            // ... (Validasi lainnya)
+            if ($updateData['harga_per_bulan'] === null || $updateData['harga_per_bulan'] === false || $updateData['harga_per_bulan'] <=0) { $errors[] = "Harga tidak valid."; }
             
-            $dataForView['kos'] = array_merge($kos, $updateData); 
+            $dataForView['kos'] = array_merge($kos, $_POST, ['jumlah_kamar_tersedia' => $updateData['jumlah_kamar_tersedia']]); // Merge current post data to retain changes on error
             if (empty($errors)) {
                 if ($this->kosModel->updateKos($kos['id'], $updateData)) {
                     if (isset($_FILES['gambar_kos_baru']) && !empty($_FILES['gambar_kos_baru']['name'][0])) {
                         $uploadDirectory = rtrim($this->appConfig['UPLOADS_FS_PATH'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'kos_images';
                         $this->_handleImageUploads($kos['id'], $_FILES['gambar_kos_baru'], $uploadDirectory);
                     }
-                     if (isset($this->logAuditModel)) {
+                    if (isset($this->logAuditModel)) {
                         $this->logAuditModel->addLog("Admin mengedit kos ID: {$kos['id']}", $_SESSION['user_id']);
                     }
                     $this->setFlashMessage("Data kos berhasil diperbarui.", "success");
@@ -284,9 +295,9 @@ class AdminController extends BaseController {
                 } else { 
                     if (empty($_SESSION['flash_message'])) { $this->setFlashMessage("Tidak ada perubahan data atau gagal update.", "info"); }
                 }
-            } else { $this->setFlashMessage(implode("<br>", $errors), "error"); }
+            } else { $this->setFlashMessage(implode("<br>", $errors), "error");}
         }
-         $this->loadAdminView('kos/form', $dataForView, $pageTitle);
+        $this->loadAdminView('kos/form', $dataForView, $pageTitle);
     }
     
     public function kosDeleteGambar($gambar_id = null, $kos_id = null): void {
@@ -295,15 +306,21 @@ class AdminController extends BaseController {
         $kos_id_filtered = filter_var($kos_id, FILTER_VALIDATE_INT);
         if (!$gambar_id_filtered || !$kos_id_filtered ) { $this->setFlashMessage("Format ID tidak valid.", "error"); $this->redirect('admin/kosEdit/' . ($kos_id_filtered ?: $kos_id)); return;}
 
-        $gambarData = $this->kosModel->deleteGambarKosById($gambar_id_filtered);
-        if ($gambarData) {
-            $filePathSystem = rtrim($this->appConfig['UPLOADS_FS_PATH'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $gambarData['path'];
-            if (file_exists($filePathSystem)) {
-                if (@unlink($filePathSystem)) { 
-                    $this->setFlashMessage("Gambar '" . htmlspecialchars($gambarData['nama_file']) . "' berhasil dihapus.", "success");
-                    if (isset($this->logAuditModel)) $this->logAuditModel->addLog("Admin menghapus gambar ID: {$gambar_id_filtered} dari kos ID: {$kos_id_filtered}", $_SESSION['user_id']);
-                } else { $this->setFlashMessage("Gagal menghapus file gambar dari server.", "warning");}
-            } else { $this->setFlashMessage("File gambar tidak ditemukan di server, data DB dihapus.", "info"); }
+        // Fetch image path BEFORE attempting to delete from DB
+        $gambarPath = $this->kosModel->getGambarPathById($gambar_id_filtered); // Assuming a method to get path only
+        
+        if ($this->kosModel->deleteGambarKosById($gambar_id_filtered)) { // This method should return true/false for success
+            if ($gambarPath) { // Only attempt file deletion if path was found
+                $filePathSystem = rtrim($this->appConfig['UPLOADS_FS_PATH'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $gambarPath;
+                if (file_exists($filePathSystem)) {
+                    if (@unlink($filePathSystem)) { 
+                        $this->setFlashMessage("Gambar berhasil dihapus dari server.", "success");
+                        if (isset($this->logAuditModel)) $this->logAuditModel->addLog("Admin menghapus gambar ID: {$gambar_id_filtered} dari kos ID: {$kos_id_filtered}", $_SESSION['user_id']);
+                    } else { $this->setFlashMessage("Gagal menghapus file gambar dari server.", "warning");}
+                } else { $this->setFlashMessage("File gambar tidak ditemukan di server, data DB dihapus.", "info"); }
+            } else { // Image data deleted from DB, but no path or path not found
+                 $this->setFlashMessage("Gambar berhasil dihapus dari database, namun file tidak ditemukan.", "info");
+            }
         } else { $this->setFlashMessage("Gagal menghapus data gambar dari DB.", "error");}
         $this->redirect('admin/kosEdit/' . $kos_id_filtered);
     }
@@ -351,16 +368,19 @@ class AdminController extends BaseController {
             $errors = [];
             if (empty($nama)) $errors[] = "Nama wajib diisi.";
             
-            // Logika pencegahan admin terakhir menghapus status adminnya sendiri
-            if ($user['id'] === $_SESSION['user_id'] && $user['is_admin'] && !$is_admin_input) {
-                // Anda perlu method di UserModel untuk menghitung jumlah admin. Misal: $this->userModel->countActiveAdmins()
-                // Untuk sekarang, kita asumsikan ada lebih dari 1 admin atau logika ini disederhanakan.
-                // Jika hanya ada 1 admin, $errors[] = "Tidak bisa menghapus status admin diri sendiri jika hanya ada satu admin.";
-            }
+            // This logic seems incomplete or intended for a specific scenario where an admin cannot demote themselves
+            // if ($user['id'] === $_SESSION['user_id'] && $user['is_admin'] && !$is_admin_input) {
+            //     $errors[] = "Anda tidak dapat mencabut status admin Anda sendiri.";
+            // }
 
             $dataForView['user'] = array_merge($user, $_POST, ['is_admin' => $is_admin_input]); 
             if (empty($errors)) {
                 if ($this->userModel->updateUserByAdmin($user['id'], $nama, $no_telepon, $alamat, $is_admin_input)) {
+                    // Update current user's session if their own admin status changes
+                    if ($user['id'] === $_SESSION['user_id']) {
+                        $_SESSION['is_admin'] = $is_admin_input;
+                    }
+
                     if (isset($this->logAuditModel)) $this->logAuditModel->addLog("Admin mengedit User ID: {$user['id']}", $_SESSION['user_id']);
                     $this->setFlashMessage("Data pengguna berhasil diperbarui.", "success");
                     $this->redirect('admin/users'); return;
@@ -393,10 +413,10 @@ class AdminController extends BaseController {
         if (!$booking || $booking['status_pemesanan'] !== 'pending') { $this->setFlashMessage("Booking tidak bisa dikonfirmasi (bukan pending).", "warning"); $this->redirect('admin/bookings'); return; }
         $kos = $this->kosModel->getKosById($booking['kos_id']);
         if (!$kos || ($kos['jumlah_kamar_tersedia'] ?? 0) <= 0 || $kos['status_kos'] !== 'available') {
-             $this->setFlashMessage("Konfirmasi Gagal: Kamar untuk '" . htmlspecialchars($kos['nama_kos'] ?? 'Kos') . "' habis/tidak tersedia.", "error");
-             if ($booking) $this->bookingModel->updateBookingStatus($booking_id_filtered, 'rejected'); // Otomatis reject jika kamar habis
-             if (isset($this->logAuditModel) && $booking) $this->logAuditModel->addLog("Admin otomatis mereject Booking ID: {$booking_id_filtered} karena kamar habis.", $_SESSION['user_id']);
-             $this->redirect('admin/bookings'); return;
+            $this->setFlashMessage("Konfirmasi Gagal: Kamar untuk '" . htmlspecialchars($kos['nama_kos'] ?? 'Kos') . "' habis/tidak tersedia.", "error");
+            if ($booking) $this->bookingModel->updateBookingStatus($booking_id_filtered, 'rejected');
+            if (isset($this->logAuditModel) && $booking) $this->logAuditModel->addLog("Admin otomatis mereject Booking ID: {$booking_id_filtered} karena kamar habis.", $_SESSION['user_id']);
+            $this->redirect('admin/bookings'); return;
         }
         $this->pdo->beginTransaction();
         try {
@@ -425,5 +445,222 @@ class AdminController extends BaseController {
         } else { $this->setFlashMessage("Gagal menolak booking ID {$booking_id_filtered}.", "error");}
         $this->redirect('admin/bookings');
     }
+
+    // --- VOUCHER MANAGEMENT (CRUD) ---
+    public function voucher(): void {
+        $pageTitle = "Manajemen Data Voucher";
+        $vouchers = $this->voucherModel->getAllVouchers(); 
+        $data = [
+            'vouchers' => $vouchers,
+        ];
+
+         $paginationBaseUrl = $this->appConfig['BASE_URL'] . 'admin/voucher';
+
+        $this->loadAdminView('voucher/list', $data, $pageTitle);
+    }
+
+    public function createVoucher(): void {
+        $pageTitle = "Buat Voucher Baru";
+        $data = [
+            'errors' => [],   // To store validation errors
+            'oldInput' => []  // To repopulate form fields on validation failure
+        ];
+        $this->loadAdminView('voucher/form', $data, $pageTitle);
+    }
+
+    public function storeVoucher(): void {
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $errors = [];
+            $input = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+
+            // Basic Validation
+            if (empty($input['code'])) {
+                $errors['code'] = 'Kode voucher harus diisi.';
+            }
+            if (empty($input['name'])) {
+                $errors['name'] = 'Nama voucher harus diisi.';
+            }
+            if (empty($input['type']) || !in_array($input['type'], ['percentage', 'fixed_amount'])) {
+                $errors['type'] = 'Tipe voucher tidak valid (harus "percentage" atau "fixed_amount").';
+            }
+            if (!is_numeric($input['value']) || $input['value'] <= 0) {
+                $errors['value'] = 'Nilai voucher harus angka positif.';
+            }
+            if (empty($input['expiration_date'])) {
+                $errors['expiration_date'] = 'Tanggal kadaluarsa harus diisi.';
+            } elseif (!strtotime($input['expiration_date'])) {
+                $errors['expiration_date'] = 'Format tanggal kadaluarsa tidak valid.';
+            }
+
+            // Prepare optional fields and checkboxes
+            $input['min_transaction_amount'] = !empty($input['min_transaction_amount']) && is_numeric($input['min_transaction_amount']) ? $input['min_transaction_amount'] : null;
+            $input['max_discount_amount'] = !empty($input['max_discount_amount']) && is_numeric($input['max_discount_amount']) ? $input['max_discount_amount'] : null;
+            $input['usage_limit_per_user'] = !empty($input['usage_limit_per_user']) && is_numeric($input['usage_limit_per_user']) ? (int)$input['usage_limit_per_user'] : 1;
+            $input['total_usage_limit'] = !empty($input['total_usage_limit']) && is_numeric($input['total_usage_limit']) ? (int)$input['total_usage_limit'] : null;
+            $input['is_active'] = isset($input['is_active']) ? 1 : 0;
+            $input['is_claimable_by_new_users'] = isset($input['is_claimable_by_new_users']) ? 1 : 0;
+            $input['current_total_uses'] = 0; // New voucher starts with 0 uses
+
+            if (empty($errors)) {
+                if ($this->voucherModel->createVoucher($input)) {
+                    if (isset($this->logAuditModel)) {
+                        $this->logAuditModel->addLog("Admin membuat voucher baru: " . htmlspecialchars($input['code']), $_SESSION['user_id'], json_encode(['voucher_code' => $input['code']]));
+                    }
+                    $this->setFlashMessage("Voucher berhasil ditambahkan.", "success");
+                    $this->redirect('admin/voucher');
+                } else {
+                    $errors['database'] = 'Terjadi kesalahan saat menyimpan voucher ke database. Silakan coba lagi.';
+                    error_log("Database error creating voucher: " . print_r($input, true)); // Log for debugging
+                }
+            }
+
+            // If there are errors, reload the form with existing input and errors
+            $data = [
+                'errors' => $errors,
+                'oldInput' => $input
+            ];
+            $this->loadAdminView('voucher/create', $data, $pageTitle);
+
+        } else {
+            // If request is not POST, redirect to the form
+            $this->redirect('admin/createVoucher');
+        }
+    }
+
+    public function editVoucher($id = null): void {
+        if ($id === null) {
+            $this->setFlashMessage("ID Voucher tidak ada.", "error");
+            $this->redirect('admin/voucher');
+            return;
+        }
+        $voucher_id_filtered = filter_var($id, FILTER_VALIDATE_INT);
+        if ($voucher_id_filtered === false || $voucher_id_filtered <= 0) {
+            $this->setFlashMessage("ID Voucher tidak valid.", "error");
+            $this->redirect('admin/voucher');
+            return;
+        }
+
+        $voucher = $this->voucherModel->getVoucherById($voucher_id_filtered);
+
+        if (!$voucher) {
+            $this->setFlashMessage("Voucher tidak ditemukan.", "error");
+            $this->redirect('admin/voucher');
+            return;
+        }
+
+        $pageTitle = 'Edit Voucher: ' . htmlspecialchars($voucher['code']);
+        $data = [
+            'voucher' => $voucher, // Original voucher data
+            'errors' => [],
+            'oldInput' => $voucher // Pre-populate form with current voucher data
+        ];
+        $this->loadAdminView('voucher/form', $data, $pageTitle);
+    }
+
+    public function updateVoucher($id = null): void {
+        if ($id === null) {
+            $this->setFlashMessage("ID Voucher tidak ada.", "error");
+            $this->redirect('admin/voucher');
+            return;
+        }
+        $voucher_id_filtered = filter_var($id, FILTER_VALIDATE_INT);
+        if ($voucher_id_filtered === false || $voucher_id_filtered <= 0) {
+            $this->setFlashMessage("ID Voucher tidak valid.", "error");
+            $this->redirect('admin/voucher');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            $errors = [];
+            $input = filter_input_array(INPUT_POST, FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+            $input['id'] = $voucher_id_filtered; // Ensure the ID is part of the data to be updated
+
+            // Basic Validation
+            if (empty($input['code'])) {
+                $errors['code'] = 'Kode voucher harus diisi.';
+            }
+            if (empty($input['name'])) {
+                $errors['name'] = 'Nama voucher harus diisi.';
+            }
+            if (empty($input['type']) || !in_array($input['type'], ['percentage', 'fixed_amount'])) {
+                $errors['type'] = 'Tipe voucher tidak valid (harus "percentage" atau "fixed_amount").';
+            }
+            if (!is_numeric($input['value']) || $input['value'] <= 0) {
+                $errors['value'] = 'Nilai voucher harus angka positif.';
+            }
+            if (empty($input['expiration_date'])) {
+                $errors['expiration_date'] = 'Tanggal kadaluarsa harus diisi.';
+            } elseif (!strtotime($input['expiration_date'])) {
+                $errors['expiration_date'] = 'Format tanggal kadaluarsa tidak valid.';
+            }
+
+            // Prepare optional fields and checkboxes
+            $input['min_transaction_amount'] = !empty($input['min_transaction_amount']) && is_numeric($input['min_transaction_amount']) ? $input['min_transaction_amount'] : null;
+            $input['max_discount_amount'] = !empty($input['max_discount_amount']) && is_numeric($input['max_discount_amount']) ? $input['max_discount_amount'] : null;
+            $input['usage_limit_per_user'] = !empty($input['usage_limit_per_user']) && is_numeric($input['usage_limit_per_user']) ? (int)$input['usage_limit_per_user'] : 1;
+            $input['total_usage_limit'] = !empty($input['total_usage_limit']) && is_numeric($input['total_usage_limit']) ? (int)$input['total_usage_limit'] : null;
+            $input['is_active'] = isset($input['is_active']) ? 1 : 0;
+            $input['is_claimable_by_new_users'] = isset($input['is_claimable_by_new_users']) ? 1 : 0;
+
+            if (empty($errors)) {
+                if ($this->voucherModel->updateVoucher($input)) {
+                    if (isset($this->logAuditModel)) {
+                        $this->logAuditModel->addLog("Admin memperbarui voucher ID: {$input['id']} (Code: " . htmlspecialchars($input['code']) . ")", $_SESSION['user_id'], json_encode(['voucher_id' => $input['id']]));
+                    }
+                    $this->setFlashMessage("Voucher berhasil diperbarui.", "success");
+                    $this->redirect('admin/voucher');
+                } else {
+                    $errors['database'] = 'Terjadi kesalahan saat memperbarui voucher atau tidak ada perubahan yang terdeteksi. Silakan coba lagi.';
+                    error_log("Database error updating voucher ID {$id}: " . print_r($input, true)); // Log for debugging
+                }
+            }
+
+            // If there are errors, reload the form with the user's submitted input and errors
+            $voucher = $this->voucherModel->getVoucherById($id); // Re-fetch original to ensure we have current state if needed
+            $data = [
+                'voucher' => $voucher,
+                'errors' => $errors,
+                'oldInput' => $input // Repopulate form with user's current submission
+            ];
+            $pageTitle = 'Edit Voucher: ' . htmlspecialchars($input['code'] ?? 'ID ' . $id);
+            $this->loadAdminView('voucher/edit', $data, $pageTitle);
+
+        } else {
+            // If request is not POST, redirect to the edit form
+            $this->redirect('admin/editVoucher/' . $id);
+        }
+    }
+
+    public function deleteVoucher($id = null): void {
+        if ($id === null) {
+            $this->setFlashMessage("ID Voucher tidak ada.", "error");
+            $this->redirect('admin/voucher');
+            return;
+        }
+        $voucher_id_filtered = filter_var($id, FILTER_VALIDATE_INT);
+        if ($voucher_id_filtered === false || $voucher_id_filtered <= 0) {
+            $this->setFlashMessage("ID Voucher tidak valid.", "error");
+            $this->redirect('admin/voucher');
+            return;
+        }
+
+        // Get voucher details before deleting for logging/flash message
+        $voucher = $this->voucherModel->getVoucherById($voucher_id_filtered);
+        $voucherCode = $voucher['code'] ?? 'N/A';
+
+        // It's highly recommended to use POST for delete operations for security
+        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+            if ($this->voucherModel->deleteVoucher($voucher_id_filtered)) {
+                if (isset($this->logAuditModel)) {
+                    $this->logAuditModel->addLog("Admin menghapus voucher ID: {$voucher_id_filtered} (Code: " . htmlspecialchars($voucherCode) . ")", $_SESSION['user_id'], json_encode(['voucher_id' => $voucher_id_filtered]));
+                }
+                $this->setFlashMessage("Voucher '{$voucherCode}' berhasil dihapus.", "success");
+            } else {
+                $this->setFlashMessage("Gagal menghapus voucher '{$voucherCode}'. Mungkin voucher tidak ditemukan atau terjadi kesalahan database.", "error");
+            }
+        } else {
+            $this->setFlashMessage("Metode tidak diizinkan untuk operasi penghapusan.", "error");
+        }
+        $this->redirect('admin/voucher');
+    }
 }
-?>

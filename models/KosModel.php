@@ -1,10 +1,14 @@
 <?php
 
-class KosModel { // Note: If you decide to use a BaseModel later, this should extend it.
-    private PDO $pdo;
+class KosModel {
+    private PDO $pdo; // Correctly declared as pdo
 
     public function __construct(PDO $pdo) {
-        $this->pdo = $pdo;
+        $this->pdo = $pdo; // Correctly assigned to pdo
+        // If your PDO connection is not globally configured for error mode and fetch mode,
+        // you might want to uncomment these lines:
+        // $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
     }
 
     /**
@@ -28,8 +32,8 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
 
         // Base SQL query to select kos data and a subquery to get the main image.
         $sqlBase = "SELECT id, nama_kos, alamat, harga_per_bulan, status_kos, jumlah_kamar_total, jumlah_kamar_tersedia, kategori,
-                           (SELECT gk.path FROM gambar_kos gk WHERE gk.kos_id = kos.id ORDER BY gk.id ASC LIMIT 1) as gambar_utama
-                    FROM kos";
+                             (SELECT gk.path FROM gambar_kos gk WHERE gk.kos_id = kos.id ORDER BY gk.id ASC LIMIT 1) as gambar_utama
+                     FROM kos";
         
         $conditions = []; // Array to store WHERE clause conditions
         $params = [];     // Array to store PDO parameters for binding
@@ -83,7 +87,7 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
         $sql = $sqlBase . $sqlWhere . " ORDER BY {$orderBy} {$orderDir} LIMIT :limit OFFSET :offset";
         
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql); // Correct: uses $this->pdo
 
             // Bind parameters dynamically based on their type.
             foreach ($params as $key => &$val) {
@@ -146,7 +150,7 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
         }
         
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql); // Correct: uses $this->pdo
             $stmt->execute($params);
             return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
@@ -164,16 +168,16 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
      */
     public function getKosById(int $id) {
         $sql = "SELECT k.*, 
-                           (SELECT JSON_ARRAYAGG(
-                                       JSON_OBJECT('id', gk.id, 'nama_file', gk.nama_file, 'path', gk.path)
-                                   ) 
+                            (SELECT JSON_ARRAYAGG(
+                                    JSON_OBJECT('id', gk.id, 'nama_file', gk.nama_file, 'path', gk.path)
+                                ) 
                             FROM gambar_kos gk 
                             WHERE gk.kos_id = k.id
-                           ) AS gambar_kos_json
+                            ) AS gambar_kos_json
                 FROM kos k 
                 WHERE k.id = :id";
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql); // Correct: uses $this->pdo
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $kos = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -208,11 +212,11 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
         }
 
         $sql = "INSERT INTO kos (nama_kos, alamat, deskripsi, harga_per_bulan, fasilitas_kos, kategori,
-                                 jumlah_kamar_total, jumlah_kamar_tersedia, status_kos)
+                                  jumlah_kamar_total, jumlah_kamar_tersedia, status_kos)
                 VALUES (:nama_kos, :alamat, :deskripsi, :harga_per_bulan, :fasilitas_kos, :kategori,
                         :jumlah_kamar_total, :jumlah_kamar_tersedia, :status_kos)";
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql); // Correct: uses $this->pdo
             $stmt->bindParam(':nama_kos', $data['nama_kos']);
             $stmt->bindParam(':alamat', $data['alamat']);
             $stmt->bindParam(':deskripsi', $data['deskripsi']);
@@ -223,7 +227,7 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
             $stmt->bindParam(':jumlah_kamar_tersedia', $jumlah_kamar_tersedia, PDO::PARAM_INT);
             $stmt->bindParam(':status_kos', $status_kos);
             
-            if ($stmt->execute()) { return $this->pdo->lastInsertId(); }
+            if ($stmt->execute()) { return $this->pdo->lastInsertId(); } // Correct: uses $this->pdo
             return null;
         } catch (PDOException $e) {
             error_log("KosModel::createKos PDOException: " . $e->getMessage());
@@ -240,12 +244,12 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
      */
     public function updateKos(int $id, array $data): bool {
         $sql = "UPDATE kos SET nama_kos = :nama_kos, alamat = :alamat, deskripsi = :deskripsi,
-                    harga_per_bulan = :harga_per_bulan, fasilitas_kos = :fasilitas_kos, kategori = :kategori,
-                    jumlah_kamar_total = :jumlah_kamar_total, jumlah_kamar_tersedia = :jumlah_kamar_tersedia,
-                    status_kos = :status_kos, updated_at = CURRENT_TIMESTAMP
-                WHERE id = :id";
+                     harga_per_bulan = :harga_per_bulan, fasilitas_kos = :fasilitas_kos, kategori = :kategori,
+                     jumlah_kamar_total = :jumlah_kamar_total, jumlah_kamar_tersedia = :jumlah_kamar_tersedia,
+                     status_kos = :status_kos, updated_at = CURRENT_TIMESTAMP
+                 WHERE id = :id";
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql); // Correct: uses $this->pdo
             $stmt->bindParam(':nama_kos', $data['nama_kos']);
             $stmt->bindParam(':alamat', $data['alamat']);
             $stmt->bindParam(':deskripsi', $data['deskripsi']);
@@ -271,26 +275,26 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
      * @return bool True on successful deletion, false otherwise.
      */
     public function deleteKos(int $id): bool {
-        $this->pdo->beginTransaction();
+        $this->pdo->beginTransaction(); // Correct: uses $this->pdo
         try {
             $sqlDeleteGambar = "DELETE FROM gambar_kos WHERE kos_id = :kos_id";
-            $stmtDeleteGambar = $this->pdo->prepare($sqlDeleteGambar);
+            $stmtDeleteGambar = $this->pdo->prepare($sqlDeleteGambar); // Correct: uses $this->pdo
             $stmtDeleteGambar->bindParam(':kos_id', $id, PDO::PARAM_INT);
             $stmtDeleteGambar->execute();
 
             $sqlDeleteKos = "DELETE FROM kos WHERE id = :id";
-            $stmtDeleteKos = $this->pdo->prepare($sqlDeleteKos);
+            $stmtDeleteKos = $this->pdo->prepare($sqlDeleteKos); // Correct: uses $this->pdo
             $stmtDeleteKos->bindParam(':id', $id, PDO::PARAM_INT);
             
             if ($stmtDeleteKos->execute()) {
                 if ($stmtDeleteKos->rowCount() > 0) {
-                    $this->pdo->commit(); return true;
+                    $this->pdo->commit(); return true; // Correct: uses $this->pdo
                 }
             }
-            $this->pdo->rollBack();
+            $this->pdo->rollBack(); // Correct: uses $this->pdo
             return false;
         } catch (PDOException $e) {
-            $this->pdo->rollBack();
+            $this->pdo->rollBack(); // Correct: uses $this->pdo
             error_log("KosModel::deleteKos PDOException for ID {$id}: " . $e->getMessage());
             return false;
         }
@@ -305,31 +309,41 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
      * @return bool True if successful (room decremented), false otherwise (e.g., no rooms available or kos not found).
      */
     public function decrementKamarTersedia(int $kosId): bool {
-        $this->pdo->beginTransaction();
+        // --- MODIFIED: Removed beginTransaction(), commit(), rollBack() ---
         try {
+            // Select current available count and status with a row-level lock
+            // FOR UPDATE is still good practice to prevent race conditions even without explicit beginTransaction here
             $sqlGetCurrent = "SELECT jumlah_kamar_tersedia, status_kos FROM kos WHERE id = :id FOR UPDATE";
-            $stmtGetCurrent = $this->pdo->prepare($sqlGetCurrent);
+            $stmtGetCurrent = $this->pdo->prepare($sqlGetCurrent); // Correct: uses $this->pdo
             $stmtGetCurrent->bindParam(':id', $kosId, PDO::PARAM_INT);
             $stmtGetCurrent->execute();
             $currentKosData = $stmtGetCurrent->fetch(PDO::FETCH_ASSOC);
+
+            // Check if kos exists, has available rooms, and is currently 'available' (not 'maintenance')
             if (!$currentKosData || ($currentKosData['jumlah_kamar_tersedia'] ?? 0) <= 0 || $currentKosData['status_kos'] !== 'available') {
-                $this->pdo->rollBack();
-                return false;
+                return false; // Return false if conditions not met (controller will then handle the rollback)
             }
+
             $newJumlahTersedia = $currentKosData['jumlah_kamar_tersedia'] - 1;
             $newStatusKos = ($newJumlahTersedia <= 0) ? 'booked' : 'available';
+
+            // Update the kos record
             $sqlUpdate = "UPDATE kos SET jumlah_kamar_tersedia = :jumlah_kamar_tersedia, status_kos = :status_kos, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND jumlah_kamar_tersedia > 0";
-            $stmtUpdate = $this->pdo->prepare($sqlUpdate);
+            $stmtUpdate = $this->pdo->prepare($sqlUpdate); // Correct: uses $this->pdo
             $stmtUpdate->bindParam(':jumlah_kamar_tersedia', $newJumlahTersedia, PDO::PARAM_INT);
             $stmtUpdate->bindParam(':status_kos', $newStatusKos);
             $stmtUpdate->bindParam(':id', $kosId, PDO::PARAM_INT);
-            if ($stmtUpdate->execute()) { return $stmtUpdate->rowCount() > 0; }
-            $this->pdo->rollBack();
-            return false;
+
+            if ($stmtUpdate->execute()) {
+                return $stmtUpdate->rowCount() > 0; // Return true if row affected
+            }
+            return false; // Return false if update failed or no row affected
         } catch (PDOException $e) {
+            // Re-throw PDOException so the controller's catch block can handle the rollback
             error_log("KosModel::decrementKamarTersedia PDOException for ID {$kosId}: " . $e->getMessage());
-            return false;
+            throw $e; // Re-throw the exception
         }
+        // --- END MODIFIED ---
     }
 
     /**
@@ -344,7 +358,7 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
         if (!in_array($newStatus, $allowedStatus)) return false;
         $sql = "UPDATE kos SET status_kos = :status, updated_at = CURRENT_TIMESTAMP WHERE id = :id";
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql); // Correct: uses $this->pdo
             $stmt->bindParam(':status', $newStatus);
             $stmt->bindParam(':id', $kosId, PDO::PARAM_INT);
             return $stmt->execute();
@@ -365,11 +379,11 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
     public function addGambarKos(int $kos_id, string $nama_file, string $path): ?string {
         $sql = "INSERT INTO gambar_kos (kos_id, nama_file, path) VALUES (:kos_id, :nama_file, :path)";
         try {
-            $stmt = $this->pdo->prepare($sql);
+            $stmt = $this->pdo->prepare($sql); // Correct: uses $this->pdo
             $stmt->bindParam(':kos_id', $kos_id, PDO::PARAM_INT);
             $stmt->bindParam(':nama_file', $nama_file);
             $stmt->bindParam(':path', $path);
-            if ($stmt->execute()) { return $this->pdo->lastInsertId(); }
+            if ($stmt->execute()) { return $this->pdo->lastInsertId(); } // Correct: uses $this->pdo
             return null;
         } catch (PDOException $e) {
             error_log("KosModel::addGambarKos Error for kos_id {$kos_id}: " . $e->getMessage());
@@ -378,25 +392,43 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
     }
 
     /**
+     * Retrieves the path of a single image by its ID.
+     *
+     * @param int $gambarId The ID of the image record.
+     * @return string|null The path of the image if found, null otherwise.
+     */
+    public function getGambarPathById(int $gambarId): ?string {
+        $stmt = $this->pdo->prepare("SELECT path FROM gambar_kos WHERE id = :id"); // FIXED: Changed $this->db to $this->pdo and kos_images to gambar_kos
+        $stmt->bindParam(':id', $gambarId, PDO::PARAM_INT);
+        $stmt->execute();
+        $result = $stmt->fetch();
+        return $result ? $result['path'] : null;
+    }
+
+    /**
      * Deletes an image record by its ID.
      *
      * @param int $gambar_id The ID of the image record to delete.
-     * @return array|null The data of the deleted image if successful, null otherwise.
-     * Returns image data (id, kos_id, nama_file, path) for file system deletion.
+     * @return array|null The deleted image data (id, kos_id, nama_file, path) if successful, null otherwise.
      */
     public function deleteGambarKosById(int $gambar_id): ?array {
+        // First, retrieve the image data before deleting the record
         $sqlGet = "SELECT id, kos_id, nama_file, path FROM gambar_kos WHERE id = :id";
-        $stmtGet = $this->pdo->prepare($sqlGet);
+        $stmtGet = $this->pdo->prepare($sqlGet); // Correct: uses $this->pdo
         $stmtGet->bindParam(':id', $gambar_id, PDO::PARAM_INT);
         $stmtGet->execute();
         $gambarData = $stmtGet->fetch(PDO::FETCH_ASSOC);
+
         if ($gambarData) {
+            // Then, delete the record
             $sqlDelete = "DELETE FROM gambar_kos WHERE id = :id";
-            $stmtDelete = $this->pdo->prepare($sqlDelete);
+            $stmtDelete = $this->pdo->prepare($sqlDelete); // Correct: uses $this->pdo
             $stmtDelete->bindParam(':id', $gambar_id, PDO::PARAM_INT);
-            if ($stmtDelete->execute() && $stmtDelete->rowCount() > 0) { return $gambarData; }
+            if ($stmtDelete->execute() && $stmtDelete->rowCount() > 0) {
+                return $gambarData; // Return the fetched data (including path)
+            }
         }
-        return null;
+        return null; // Return null if not found or deletion failed
     }
 
     /**
@@ -406,7 +438,7 @@ class KosModel { // Note: If you decide to use a BaseModel later, this should ex
      */
     public function countTotalKos(): int {
         try {
-            $stmt = $this->pdo->query("SELECT COUNT(*) FROM kos");
+            $stmt = $this->pdo->query("SELECT COUNT(*) FROM kos"); // Correct: uses $this->pdo
             return (int)$stmt->fetchColumn();
         } catch (PDOException $e) {
             error_log("KosModel::countTotalKos Error: " . $e->getMessage());
