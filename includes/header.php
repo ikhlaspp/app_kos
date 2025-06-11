@@ -73,6 +73,8 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
         /* Default (desktop) navigation styles */
         .main-navigation {
             margin-left: 25px;
+            /* On desktop, main navigation is displayed as a flex row */
+            display: flex;
         }
         .main-navigation ul {
             list-style-type: none;
@@ -102,7 +104,7 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
         .header-icons {
             display: flex;
             align-items: center;
-            margin-left: auto;
+            margin-left: auto; /* Push icons to the right */
         }
         .header-icons .icon-link {
             color: #F9F7F7;
@@ -119,11 +121,12 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
 
         /* Hide hamburger by default on larger screens */
         .hamburger-menu-placeholder {
-            display: none;
+            display: none !important; /* Hidden on desktop */
         }
 
-        /* Login/Logout link outside hamburger (desktop) */
-        .header-auth-link {
+        /* Login/Logout link outside hamburger (desktop-only) */
+        .header-auth-link.desktop-only-auth-link {
+            display: block; /* Visible on desktop */
             color: #F9F7F7;
             text-decoration: none;
             padding: 0.5rem 0.9rem;
@@ -137,10 +140,15 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
             line-height: 1.2;
             border: 1px solid transparent;
         }
-        .header-auth-link:hover {
+        .header-auth-link.desktop-only-auth-link:hover {
             background-color: #3F72AF;
             color: #FFFFFF;
             border-color: #3F72AF;
+        }
+
+        /* Login/Logout link inside hamburger (mobile-only) */
+        .main-navigation .mobile-only-auth-link {
+            display: none; /* Hidden on desktop within the main nav */
         }
 
         /* Mobile Styles (<= 992px) */
@@ -185,23 +193,36 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
 
             /* Show hamburger on mobile screens */
             .hamburger-menu-placeholder {
-                display: block;
+                display: block !important; /* Visible on mobile */
             }
 
             /* Hide the desktop login/logout link on mobile */
-            .header-icons .header-auth-link {
+            .header-auth-link.desktop-only-auth-link {
                 display: none;
             }
 
-            /* Style the login/logout link when it's inside the mobile menu */
-            .main-navigation.open .header-auth-link {
-                display: block; /* Make sure it's visible when menu is open */
+            /* Style the mobile-only login/logout link when it's inside the mobile menu */
+            .main-navigation .mobile-only-auth-link {
+                display: block; /* Make sure it's visible within the mobile menu */
                 width: 100%; /* Full width */
                 margin-left: 0; /* Remove left margin */
                 text-align: center; /* Center text */
                 padding: 12px 15px; /* Adjust padding to match other menu items */
                 border-top: 1px solid #3F72AF; /* Add a border for separation */
                 border-radius: 0; /* Remove border-radius */
+            }
+             .main-navigation .mobile-only-auth-link a.header-auth-link {
+                /* Ensure the anchor itself also takes full space and has correct styling */
+                display: block;
+                width: 100%;
+                color: #F9F7F7; /* Adjust color for mobile menu consistency */
+                background-color: transparent;
+                border: none;
+                font-size: 0.85rem; /* Match other menu items */
+            }
+            .main-navigation .mobile-only-auth-link a.header-auth-link:hover {
+                background-color: #3F72AF;
+                color: #FFFFFF;
             }
         }
 
@@ -254,16 +275,27 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
                             <li><a href="<?php echo htmlspecialchars($baseUrl . 'home/about'); ?>">Tentang</a></li>
                         <?php endif; ?>
 
-                        <?php if (isset($_SESSION['user_id'])): ?>
-                            <?php $userNameDisplay = $_SESSION['user_nama'] ?? ($_SESSION['is_admin'] ? 'Admin' : 'User'); ?>
-                            <li><a href="<?php echo htmlspecialchars($baseUrl . 'auth/logout'); ?>" class="header-auth-link">Logout (<?php echo htmlspecialchars($userNameDisplay); ?>)</a></li>
-                        <?php else: ?>
-                            <li><a href="<?php echo htmlspecialchars($baseUrl . 'auth/login'); ?>" class="header-auth-link">Login</a></li>
-                        <?php endif; ?>
+                        <!-- Mobile-only Login/Logout Link - visible only when mainNav is open on mobile -->
+                        <li class="mobile-only-auth-link">
+                            <?php if (isset($_SESSION['user_id'])): ?>
+                                <?php $userNameDisplay = $_SESSION['user_nama'] ?? ($_SESSION['is_admin'] ? 'Admin' : 'User'); ?>
+                                <a href="<?php echo htmlspecialchars($baseUrl . 'auth/logout'); ?>" class="header-auth-link">Logout (<?php echo htmlspecialchars($userNameDisplay); ?>)</a>
+                            <?php else: ?>
+                                <a href="<?php echo htmlspecialchars($baseUrl . 'auth/login'); ?>" class="header-auth-link">Login</a>
+                            <?php endif; ?>
+                        </li>
                     </ul>
                 </nav>
 
                 <div class="header-icons">
+                    <!-- Desktop-only Login/Logout Link - visible only on desktop -->
+                    <?php if (isset($_SESSION['user_id'])): ?>
+                        <?php $userNameDisplay = $_SESSION['user_nama'] ?? ($_SESSION['is_admin'] ? 'Admin' : 'User'); ?>
+                        <a href="<?php echo htmlspecialchars($baseUrl . 'auth/logout'); ?>" class="header-auth-link desktop-only-auth-link">Logout (<?php echo htmlspecialchars($userNameDisplay); ?>)</a>
+                    <?php else: ?>
+                        <a href="<?php echo htmlspecialchars($baseUrl . 'auth/login'); ?>" class="header-auth-link desktop-only-auth-link">Login</a>
+                    <?php endif; ?>
+                    <!-- Hamburger icon - visible only on mobile -->
                     <a href="#" class="icon-link hamburger-menu-placeholder" id="hamburgerIcon" aria-label="Menu" aria-controls="mainNav" aria-expanded="false">&#9776;</a>
                 </div>
             </div>
