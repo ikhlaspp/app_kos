@@ -31,7 +31,7 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            overflow-x: hidden;
+            padding-top: 60px;
         }
         .page-wrapper {
             flex: 1 0 auto;
@@ -42,8 +42,10 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
             color: #F9F7F7;
             padding: 12px 0;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            position: sticky;
+            position: fixed;
             top: 0 !important;
+            left: 0;
+            right: 0;
             width: 100%;
             box-sizing: border-box;
             z-index: 1000;
@@ -141,7 +143,7 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
             .main-navigation {
                 display: none;
                 position: absolute;
-                top: 54px;
+                top: 100%;
                 left: 0;
                 right: 0;
                 background-color: #112D4E;
@@ -224,7 +226,7 @@ $currentPageTitle = $pageTitle ?? $currentAppName;
                         <?php else: ?>
                             <li><a href="<?php echo htmlspecialchars($baseUrl); ?>">Home</a></li>
                             <li><a href="<?php echo htmlspecialchars($baseUrl . 'kos/daftar'); ?>">Daftar Kos</a></li>
-                            <li><a href="<?php echo htmlspecialchars($baseUrl . 'home/about'); ?>">Tentang</a></li>
+                            <li><li><a href="<?php echo htmlspecialchars($baseUrl . 'home/about'); ?>">Tentang</a></li>
                         <?php endif; ?>
                     </ul>
                 </nav>

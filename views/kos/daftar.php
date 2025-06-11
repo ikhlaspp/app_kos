@@ -1,11 +1,21 @@
 <?php
 
-$paletteWhite      = '#FFFFFF';
-$paletteLightBlue  = '#E9F1F7';
-$paletteMediumBlue = '#4A90E2';
-$paletteDarkBlue   = '#1A3A5B';
-$paletteTextPrimary = '#0D2A57';
-$paletteTextSecondary = '#555555';
+// Custom Color Palette for consistency
+$paletteWhite = '#FFFFFF';
+$paletteLightBlue = '#E9F1F7';
+$paletteMediumBlue = '#4A90E2'; // Used for primary accents/buttons, price
+$paletteDarkBlue = '#1A3A5B';   // Used for darker text/hover states, main headings
+$paletteTextPrimary = '#0D2A57'; // Main text color
+$paletteTextSecondary = '#555555'; // Secondary text color
+
+// For general page background (used by sticky elements to prevent transparency issues)
+$pageBackgroundColor = '#F0F4FF';
+
+// Status colors for category badges (can reuse existing status colors or define new ones)
+$categoryPutraColor = '#4285F4'; // Blue, similar to paletteMediumBlue
+$categoryPutriColor = '#E67E22'; // Orange
+$categoryCampurColor = '#8E44AD'; // Purple
+
 
 $currentSearchTerm   = $filterValues['search_term'] ?? '';
 $currentKategori     = $filterValues['kategori']    ?? '';
@@ -19,8 +29,30 @@ $totalPages        = $pagination['totalPages']    ?? 1;
 $paginationBaseUrl = $pagination['baseUrl']       ?? ($appConfig['BASE_URL'] . 'kos/daftar');
 $filterQueryString = $pagination['queryString']   ?? '';
 
+// Helper to adjust color brightness (needed for consistent use)
+function adjustBrightness($hex, $steps) {
+    $steps = max(-255, min(255, $steps));
+    $hex = str_replace('#', '', $hex);
+    $rgb = [];
+    if (strlen($hex) == 3) {
+        $rgb[0] = hexdec(str_repeat(substr($hex, 0, 1), 2));
+        $rgb[1] = hexdec(str_repeat(substr($hex, 1, 1), 2));
+        $rgb[2] = hexdec(str_repeat(substr($hex, 2, 1), 2));
+    } else {
+        $rgb[0] = hexdec(substr($hex, 0, 2));
+        $rgb[1] = hexdec(substr($hex, 2, 2));
+        $rgb[2] = hexdec(substr($hex, 4, 2));
+    }
+    $rgb[0] = max(0, min(255, $rgb[0] + $steps));
+    $rgb[1] = max(0, min(255, $rgb[1] + $steps));
+    $rgb[2] = max(0, min(255, $rgb[2] + $steps));
+    return '#' . str_pad(dechex($rgb[0]), 2, '0', STR_PAD_LEFT)
+               . str_pad(dechex($rgb[1]), 2, '0', STR_PAD_LEFT)
+               . str_pad(dechex($rgb[2]), 2, '0', STR_PAD_LEFT);
+}
 ?>
 <style>
+    /* Kos item image hover effect for visual feedback */
     .kos-item img {
         transition: transform 0.3s ease-in-out;
     }
@@ -29,6 +61,7 @@ $filterQueryString = $pagination['queryString']   ?? '';
         transform: scale(1.05);
     }
 
+    /* Kos Card Theme Styles */
     .kos-item {
         border: none;
         border-radius: 12px;
@@ -63,7 +96,7 @@ $filterQueryString = $pagination['queryString']   ?? '';
 
     .kos-item .kos-title {
         margin-top: 0;
-        margin-bottom: 8px;
+        margin-bottom: 8px; /* Adjusted margin-bottom */
         font-size: 1.25em;
         font-weight: 600;
         color: <?php echo htmlspecialchars($paletteDarkBlue); ?>;
@@ -84,9 +117,12 @@ $filterQueryString = $pagination['queryString']   ?? '';
     .kos-item .kos-location {
         font-size: 0.9em;
         color: <?php echo htmlspecialchars($paletteTextSecondary); ?>;
-        margin-bottom: 8px;
+        margin-bottom: 8px; /* Standard margin-bottom */
         flex-grow: 1;
         line-height: 1.4;
+        display: flex; /* Allow content inside to align */
+        align-items: center; /* Vertically align items */
+        flex-wrap: wrap; /* Allow wrapping if content is too long */
     }
 
     .kos-item .kos-location i {
@@ -127,6 +163,22 @@ $filterQueryString = $pagination['queryString']   ?? '';
         color: <?php echo htmlspecialchars($paletteWhite); ?>;
         display: inline-block;
     }
+    
+    /* Kos Category Badge */
+    .kos-category-badge {
+        font-size: 0.75em;
+        font-weight: 600;
+        padding: 0.25em 0.6em;
+        border-radius: 0.25rem;
+        text-transform: capitalize;
+        white-space: nowrap;
+        display: inline-block; /* Ensure it stays inline */
+    }
+    /* Specific colors for categories */
+    .kos-category-badge.putra { background-color: <?php echo htmlspecialchars($categoryPutraColor); ?>; color: <?php echo htmlspecialchars($paletteWhite); ?>; }
+    .kos-category-badge.putri { background-color: <?php echo htmlspecialchars($categoryPutriColor); ?>; color: <?php echo htmlspecialchars($paletteWhite); ?>; }
+    .kos-category-badge.campur { background-color: <?php echo htmlspecialchars($categoryCampurColor); ?>; color: <?php echo htmlspecialchars($paletteWhite); ?>; }
+
 
     .kos-item .btn-detail {
         display: block;
@@ -148,15 +200,29 @@ $filterQueryString = $pagination['queryString']   ?? '';
         color: <?php echo htmlspecialchars($paletteWhite); ?>;
     }
 
+    /* Sticky Search Bar Styles */
+    .main-search-form-sticky {
+        position: sticky;
+        top: 60px; /* Adjust based on fixed header height */
+        z-index: 900;
+        background-color: <?php echo htmlspecialchars($pageBackgroundColor); ?>;
+        padding-top: 15px;
+        padding-bottom: 15px;
+        margin-bottom: 0 !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+
+    /* Sticky Sidebar Filter Styles */
     .sidebar-filter {
         background-color: <?php echo htmlspecialchars($paletteLightBlue); ?>;
         padding: 20px;
         border-radius: 8px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         position: sticky;
-        top: 20px;
+        top: 130px; /* (Header height + search bar height + margin) */
         align-self: flex-start;
-        z-index: 100;
+        z-index: 800;
     }
 
     .sidebar-filter .form-label {
@@ -187,12 +253,23 @@ $filterQueryString = $pagination['queryString']   ?? '';
         padding-left: 20px;
     }
 
+    /* MODIFIED: Pagination Active State Color */
     .pagination .page-item.active .page-link {
         z-index: 3;
-        color: #fff;
-        background-color: #007bff;
-        border-color: #007bff;
+        color: <?php echo htmlspecialchars($paletteWhite); ?>; /* White text for active */
+        background-color: <?php echo htmlspecialchars($paletteMediumBlue); ?>; /* Use palette blue for active background */
+        border-color: <?php echo htmlspecialchars($paletteMediumBlue); ?>; /* Use palette blue for active border */
     }
+    .pagination .page-link { /* Ensure other page links are also themed */
+        color: <?php echo htmlspecialchars($paletteMediumBlue); ?>;
+        border-color: <?php echo htmlspecialchars(adjustBrightness($paletteMediumBlue, 50)); ?>; /* Lighter border for inactive links */
+    }
+    .pagination .page-link:hover {
+        color: <?php echo htmlspecialchars($paletteDarkBlue); ?>;
+        background-color: <?php echo htmlspecialchars($paletteLightBlue); ?>;
+        border-color: <?php echo htmlspecialchars($paletteLightBlue); ?>;
+    }
+
 
     .main-search-form .input-group {
         width: 100%;
@@ -211,6 +288,12 @@ $filterQueryString = $pagination['queryString']   ?? '';
     }
 
     @media (max-width: 767.98px) {
+        .main-search-form-sticky {
+            position: static;
+            padding-top: 0;
+            padding-bottom: 1rem;
+            box-shadow: none;
+        }
         .sidebar-filter {
             position: static;
             width: 100%;
@@ -240,6 +323,9 @@ $filterQueryString = $pagination['queryString']   ?? '';
         .kos-item .kos-price {
             font-size: 1.05em;
         }
+        .kos-category-badge {
+            margin-left: 0;
+        }
     }
 </style>
 
@@ -247,28 +333,30 @@ $filterQueryString = $pagination['queryString']   ?? '';
     <h2><?php echo htmlspecialchars($pageTitle ?? 'Daftar Kos Tersedia'); ?></h2>
 </div>
 
-<form action="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'kos/daftar'); ?>" method="GET" class="mb-4 main-search-form">
-    <div class="input-group">
-        <input type="text" class="form-control" name="search_term" value="<?php echo htmlspecialchars($currentSearchTerm); ?>" placeholder="Cari nama atau alamat kos..." aria-label="Cari Kos">
-        <button class="btn btn-search" type="submit"><i class="fas fa-search me-1"></i> Cari</button>
-        <?php
-        $hasActiveFilters = !empty($currentSearchTerm) ||
-                            !empty($currentKategori) ||
-                            !empty($currentMinHarga) ||
-                            !empty($currentMaxHarga) ||
-                            !empty($currentFilterStatus) ||
-                            !empty($currentFasilitas);
-        if ($hasActiveFilters):
-        ?>
-            <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'kos/daftar'); ?>" class="btn btn-outline-secondary" title="Reset Semua Pencarian & Filter">
-                <i class="fas fa-times"></i>
-            </a>
-        <?php endif; ?>
-    </div>
-</form>
+<div class="container main-search-form-sticky">
+    <form action="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'kos/daftar'); ?>" method="GET" class="mb-0 main-search-form">
+        <div class="input-group">
+            <input type="text" class="form-control" name="search_term" value="<?php echo htmlspecialchars($currentSearchTerm); ?>" placeholder="Cari nama atau alamat kos..." aria-label="Cari Kos">
+            <button class="btn btn-search" type="submit"><i class="fas fa-search me-1"></i> Cari</button>
+            <?php
+            $hasActiveFilters = !empty($currentSearchTerm) ||
+                                !empty($currentKategori) ||
+                                !empty($currentMinHarga) ||
+                                !empty($currentMaxHarga) ||
+                                !empty($currentFilterStatus) ||
+                                !empty($currentFasilitas);
+            if ($hasActiveFilters):
+            ?>
+                <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'kos/daftar'); ?>" class="btn btn-outline-secondary" title="Reset Semua Pencarian & Filter">
+                    <i class="fas fa-times"></i>
+                </a>
+            <?php endif; ?>
+        </div>
+    </form>
+</div>
 
-<div class="row">
-    <div class="col-md-3">
+
+<div class="row mt-3"> <div class="col-md-3">
         <div class="sidebar-filter">
             <h5 class="mb-3 text-center"><i class="fas fa-sliders-h me-2"></i>Opsi Filter Lanjutan</h5>
             <form action="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'kos/daftar'); ?>" method="GET">
@@ -309,7 +397,6 @@ $filterQueryString = $pagination['queryString']   ?? '';
                 <div class="mb-3">
                     <label for="filter_fasilitas" class="form-label">Fasilitas (pisahkan dengan koma)</label>
                     <input type="text" class="form-control" id="filter_fasilitas" name="fasilitas" value="<?php echo htmlspecialchars($currentFasilitas); ?>" placeholder="Contoh: AC, WiFi, Kamar Mandi Dalam">
-                    <small class="form-text text-muted">Cari kos yang memiliki salah satu atau semua fasilitas yang disebutkan (tergantung implementasi backend).</small>
                 </div>
 
                 <div class="d-grid gap-2">
@@ -354,6 +441,16 @@ $filterQueryString = $pagination['queryString']   ?? '';
                                         <?php echo htmlspecialchars($item_kos['nama_kos']); ?>
                                     </a>
                                 </h3>
+                                <?php if (!empty($item_kos['kategori'])): ?>
+                                    <?php
+                                        $categoryClass = strtolower(htmlspecialchars($item_kos['kategori']));
+                                        $categoryText = ucfirst($categoryClass);
+                                    ?>
+                                    <p class="mb-2"> <span class="kos-category-badge <?php echo $categoryClass; ?>">
+                                            <?php echo $categoryText; ?>
+                                        </span>
+                                    </p>
+                                <?php endif; ?>
                                 <p class="kos-location"><small><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($item_kos['alamat']); ?></small></p>
                                 <p class="kos-price">Rp <?php echo number_format($item_kos['harga_per_bulan'], 0, ',', '.'); ?> <small>/ bulan</small></p>
                                 <div class="kos-meta">
@@ -371,7 +468,7 @@ $filterQueryString = $pagination['queryString']   ?? '';
                                         }
                                         ?>
                                         <span class="kos-status" style="background-color: <?php echo $bgColor; ?>; color: <?php echo $textColor; ?>;">
-                                            <?php echo ucfirst(htmlspecialchars($item_kos['status_kos'] ?? 'N/A')); ?>
+                                            <?php echo ucfirst(htmlspecialchars($statusValue)); ?>
                                         </span>
                                     </span>
                                 </div>

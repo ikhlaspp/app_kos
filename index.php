@@ -51,21 +51,17 @@ if (session_status() == PHP_SESSION_NONE) {
     session_start();
 }
 
-// --- FIX FOR BaseController Autoloading ---
 // Explicitly require the BaseController class BEFORE autoloading or other controllers.
-// This ensures it's always loaded and available for any controller that extends it.
 $baseControllerPath = $appConfig['CONTROLLERS_PATH'] . 'BaseController.php';
 if (!file_exists($baseControllerPath)) {
     die("Error: BaseController.php tidak ditemukan di jalur yang diharapkan: " . htmlspecialchars($baseControllerPath));
 }
 require_once $baseControllerPath;
-// --- END FIX ---
 
 
 // Autoloading classes (Controllers, Models).
 spl_autoload_register(function ($className) use ($appConfig) {
     $pathsToTry = [
-        // No need to try BaseController.php here anymore if it's explicitly required above
         ($appConfig['CONTROLLERS_PATH'] ?? 'controllers/') . $className . '.php',
         ($appConfig['MODELS_PATH'] ?? 'models/') . $className . '.php',
     ];
@@ -107,15 +103,34 @@ $controllerName = !empty($segments[0]) ? ucfirst(strtolower(filter_var($segments
 $actionName     = !empty($segments[1]) ? strtolower(filter_var($segments[1], FILTER_SANITIZE_URL)) : $appConfig['DEFAULT_ACTION'];
 $params         = array_slice($segments, 2);
 
+// FIX FOR PAGINATION ROUTING: If the URL has /page/X segments, move X into $_GET['page'] and remove from params.
+if (count($params) >= 2 && $params[0] === 'page' && is_numeric($params[1])) {
+    $_GET['page'] = $params[1];
+    $params = array_slice($params, 2);
+} else {
+    // If no 'page' segment is found, ensure $_GET['page'] is set to 1 for initial loads
+    if (!isset($_GET['page'])) {
+        $_GET['page'] = 1;
+    }
+}
+
 
 // Dispatch the request to the appropriate controller and action.
-// The $controllerFile variable is technically not needed here if class_exists and autoloader work,
-// but it can be useful for debugging specific "file not found" scenarios for controllers.
-// $controllerFile = $appConfig['CONTROLLERS_PATH'] . $controllerName . '.php';
-
-
 if (class_exists($controllerName)) {
     try {
+        // Handle API routes specially if they don't follow standard controller/action pattern
+        // Example: /api/validateVoucher (if this was implemented)
+        /*
+        if ($controllerName === 'ApiController' && $actionName === 'validateVoucher') {
+            $controllerInstance = new ApiController($pdo, $appConfig);
+            $controllerInstance->validateVoucher();
+            exit;
+        }
+        */
+        // --- ADD THIS CRITICAL DEBUG LINE ---
+        error_log("DEBUG (Index - Pre-Dispatch): Final _GET array before controller call: " . print_r($_GET, true));
+        // --- END CRITICAL DEBUG LINE --
+
         $controllerInstance = new $controllerName($pdo, $appConfig);
 
         if (method_exists($controllerInstance, $actionName)) {
@@ -144,7 +159,6 @@ if (class_exists($controllerName)) {
     http_response_code(404);
     $errorMessage = "Error 404: Controller '{$controllerName}' tidak ditemukan.";
 
-    // Provide more specific error if controller file exists but class isn't found within it
     $controllerFileExists = file_exists(($appConfig['CONTROLLERS_PATH'] ?? 'controllers/') . $controllerName . '.php');
     if ($controllerFileExists) {
         $errorMessage = "Error 404: Class '{$controllerName}' tidak ditemukan di dalam file '" . htmlspecialchars(($appConfig['CONTROLLERS_PATH'] ?? 'controllers/') . $controllerName . '.php') . "'. Pastikan nama class dan nama file sudah benar (termasuk kapitalisasi).";
@@ -153,7 +167,6 @@ if (class_exists($controllerName)) {
     }
 
     if (($appConfig['APP_ENV'] ?? 'production') === 'development') {
-        // Detailed error message already constructed above
     }
     echo $errorMessage;
 }
