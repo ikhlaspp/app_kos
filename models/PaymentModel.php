@@ -14,8 +14,6 @@ class PaymentModel {
     public function createPayment(int $bookingId, string $metodePembayaran, float $jumlahPembayaran, string $statusPembayaran = 'paid', ?string $buktiPembayaran = null) {
         $sql = "INSERT INTO payments (booking_id, metode_pembayaran, jumlah_pembayaran, status_pembayaran, bukti_pembayaran, tanggal_pembayaran)
                 VALUES (:booking_id, :metode_pembayaran, :jumlah_pembayaran, :status_pembayaran, :bukti_pembayaran, CURRENT_TIMESTAMP)";
-        // Di dalam method createPayment() di file models/PaymentModel.php
-        // ...
         try {
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindParam(':booking_id', $bookingId, PDO::PARAM_INT);

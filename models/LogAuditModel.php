@@ -1,5 +1,4 @@
 <?php
-// File: nama_proyek_kos/models/LogAuditModel.php
 
 class LogAuditModel {
     private PDO $pdo;
@@ -8,13 +7,6 @@ class LogAuditModel {
         $this->pdo = $pdo;
     }
 
-    /**
-     * Menambahkan entri log baru.
-     * @param string $aksi Deskripsi aksi.
-     * @param int|null $userId ID pengguna yang melakukan aksi (jika ada).
-     * @param string|null $detailAksi Detail tambahan (bisa berupa string JSON).
-     * @return bool True jika berhasil, false jika gagal.
-     */
     public function addLog(string $aksi, ?int $userId = null, ?string $detailAksi = null): bool {
         $sql = "INSERT INTO log_audit (user_id, aksi, detail_aksi) VALUES (:user_id, :aksi, :detail_aksi)";
         try {
@@ -22,6 +14,7 @@ class LogAuditModel {
             $stmt->bindParam(':user_id', $userId, $userId === null ? PDO::PARAM_NULL : PDO::PARAM_INT);
             $stmt->bindParam(':aksi', $aksi);
             $stmt->bindParam(':detail_aksi', $detailAksi, $detailAksi === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            
             return $stmt->execute();
         } catch (PDOException $e) {
             error_log("LogAuditModel::addLog Error: " . $e->getMessage());
@@ -29,11 +22,6 @@ class LogAuditModel {
         }
     }
 
-    /**
-     * Mengambil log terbaru.
-     * @param int $limit Jumlah log yang ingin diambil.
-     * @return array Daftar log, bisa join dengan tabel users untuk nama pengguna.
-     */
     public function getRecentLogs(int $limit = 10): array {
         $sql = "SELECT la.*, u.nama AS nama_pengguna, u.email AS email_pengguna
                 FROM log_audit la
@@ -51,4 +39,3 @@ class LogAuditModel {
         }
     }
 }
-?>

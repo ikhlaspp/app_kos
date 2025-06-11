@@ -1,76 +1,288 @@
 <?php
+// views/kos/detail.php
+// Variables $pageTitle, $appConfig, $kos are available.
 
-// Variabel $pageTitle, $appConfig, dan $kos (detail kos) tersedia dari KosController
+// Custom Color Palette for consistency
+$paletteWhite = '#FFFFFF';
+$paletteLightBlue = '#E9F1F7';
+$paletteMediumBlue = '#4A90E2'; // Used for primary accents/buttons, price
+$paletteDarkBlue = '#1A3A5B';   // Used for darker text/hover states, main headings
+$paletteTextPrimary = '#0D2A57'; // Main text color
+$paletteTextSecondary = '#555555'; // Secondary text color (e.g., address)
+$paletteAccentBlue = '#6A9EFF'; // For lighter blue accents if needed
+
+// Status Colors - map to your palette or similar
+$statusSuccess = '#28a745';   // Green for available
+$statusWarning = '#ffc107';   // Yellow for pending/maintenance
+$statusDanger = '#dc3545';    // Red for booked/rejected
+$statusInfo = '#17a2b8';      // Teal/Light Blue for completed
+
+// Helper to adjust color brightness (used for borders/accents)
+function adjustBrightness($hex, $steps) {
+    $steps = max(-255, min(255, $steps));
+    $hex = str_replace('#', '', $hex);
+    $rgb = [];
+    if (strlen($hex) == 3) {
+        $rgb[0] = hexdec(str_repeat(substr($hex, 0, 1), 2));
+        $rgb[1] = hexdec(str_repeat(substr($hex, 1, 1), 2));
+        $rgb[2] = hexdec(str_repeat(substr($hex, 2, 1), 2));
+    } else {
+        $rgb[0] = hexdec(substr($hex, 0, 2));
+        $rgb[1] = hexdec(substr($hex, 2, 2));
+        $rgb[2] = hexdec(substr($hex, 4, 2));
+    }
+    $rgb[0] = max(0, min(255, $rgb[0] + $steps));
+    $rgb[1] = max(0, min(255, $rgb[1] + $steps));
+    $rgb[2] = max(0, min(255, $rgb[2] + $steps));
+    return '#' . str_pad(dechex($rgb[0]), 2, '0', STR_PAD_LEFT)
+               . str_pad(dechex($rgb[1]), 2, '0', STR_PAD_LEFT)
+               . str_pad(dechex($rgb[2]), 2, '0', STR_PAD_LEFT);
+}
 ?>
 
-<h2><?php echo htmlspecialchars($pageTitle ?? 'Detail Kos'); ?></h2>
+<style>
+    /* Main Page Title */
+    h2 {
+        color: <?php echo htmlspecialchars($paletteDarkBlue); ?>;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+    }
 
-<?php if (!empty($kos)): ?>
-    <div class="kos-detail-card" style="background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-        
-        <?php // Menampilkan gambar-gambar kos jika ada ?>
-        <?php if (!empty($kos['gambar_kos']) && is_array($kos['gambar_kos'])): ?>
-            <div class="kos-gallery" style="margin-bottom: 20px;">
-                <?php foreach ($kos['gambar_kos'] as $gambar): ?>
-                    <img src="<?php echo htmlspecialchars($appConfig['UPLOADS_URL_PATH'] . $gambar['path']); // Asumsi path adalah relatif dari BASE_URL atau path absolut sudah benar ?>" 
-                         alt="<?php echo htmlspecialchars($gambar['nama_file']); ?>" 
-                         style="max-width: 200px; height: auto; border-radius: 4px; margin-right: 10px; margin-bottom:10px; border: 1px solid #eee;">
-                <?php endforeach; ?>
-            </div>
-        <?php elseif (!empty($kos['gambar_utama'])): // Fallback jika hanya ada gambar_utama ?>
-             <img src="<?php echo htmlspecialchars($appConfig['ASSETS_URL'] . 'images/' . $kos['gambar_utama']); ?>" 
-                 alt="Gambar <?php echo htmlspecialchars($kos['nama_kos']); ?>" 
-                 style="max-width: 100%; height: auto; border-radius: 5px; margin-bottom: 20px; border: 1px solid #eee;">
-        <?php else: ?>
-            <img src="<?php echo htmlspecialchars($appConfig['ASSETS_URL'] . 'images/default-kos.jpg'); ?>" 
-                 alt="Gambar Kos Default" 
-                 style="max-width: 100%; height: auto; border-radius: 5px; margin-bottom: 20px; border: 1px solid #eee;">
-        <?php endif; ?>
-        
-        <h3><?php echo htmlspecialchars($kos['nama_kos']); ?></h3>
-        <p><strong>Alamat:</strong> <?php echo htmlspecialchars($kos['alamat']); ?></p>
-        <p style="font-size: 1.2em; color: #007bff; font-weight: bold;">Harga: Rp <?php echo number_format($kos['harga_per_bulan'], 0, ',', '.'); ?> / bulan</p>
-        
-        <p>
-            <strong>Status:</strong> 
-            <span style="font-weight: bold; color: <?php 
-                $status_kos_view = $kos['status_kos'] ?? 'maintenance';
-                echo $status_kos_view === 'available' ? 'green' : ($status_kos_view === 'booked' ? 'red' : 'darkorange'); 
-            ?>;">
-                <?php echo ucfirst(htmlspecialchars($status_kos_view)); ?>
-            </span>
-        </p>
-        <p>
-            <strong>Kamar Tersedia:</strong> 
-            <?php echo htmlspecialchars($kos['jumlah_kamar_tersedia'] ?? 0); ?> dari <?php echo htmlspecialchars($kos['jumlah_kamar_total'] ?? 0); ?> unit
-        </p>
-        
-        <h4 style="margin-top: 20px;">Deskripsi:</h4>
-        <p><?php echo nl2br(htmlspecialchars($kos['deskripsi'] ?? 'Tidak ada deskripsi.')); ?></p>
-        
-        <h4 style="margin-top: 20px;">Fasilitas:</h4>
-        <p><?php echo htmlspecialchars($kos['fasilitas_kos'] ?? 'Tidak ada informasi fasilitas.'); ?></p>
+    /* Main Detail Card Container */
+    .kos-detail-card {
+        background-color: <?php echo htmlspecialchars($paletteWhite); ?>;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
 
-        <?php // Tombol Booking kondisional ?>
-        <?php if ($kos['status_kos'] === 'available' && ($kos['jumlah_kamar_tersedia'] ?? 0) > 0): ?>
-            <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'booking/pesan/' . $kos['id']); ?>" 
-               style="display: inline-block; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; font-size: 1.1em;">
-                Pesan Sekarang!
+    /* Image Gallery Styles */
+    .kos-gallery img {
+        width: 100%; /* Make images responsive */
+        max-width: 200px; /* Max size for individual thumbnails */
+        height: 150px; /* Fixed height for consistency */
+        object-fit: cover; /* Cover the area, cropping if necessary */
+        border-radius: 6px;
+        border: 1px solid <?php echo htmlspecialchars(adjustBrightness($paletteLightBlue, -10)); ?>;
+        margin-bottom: 10px;
+    }
+    .kos-main-image {
+        width: 100%;
+        max-height: 400px; /* Max height for main image */
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid <?php echo htmlspecialchars(adjustBrightness($paletteLightBlue, -10)); ?>;
+        margin-bottom: 1.5rem;
+    }
+    .kos-no-image {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 8px;
+        border: 1px solid <?php echo htmlspecialchars(adjustBrightness($paletteLightBlue, -10)); ?>;
+        margin-bottom: 1.5rem;
+        background-color: <?php echo htmlspecialchars($paletteLightBlue); ?>;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: <?php echo htmlspecialchars($paletteTextSecondary); ?>;
+        font-size: 1.2rem;
+    }
+
+    /* Headings within card */
+    .kos-detail-card h3, .kos-detail-card h4 {
+        color: <?php echo htmlspecialchars($paletteDarkBlue); ?>;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    .kos-detail-card h4 {
+        margin-top: 1.5rem; /* More space above sub-sections */
+    }
+
+    /* Paragraph Text */
+    .kos-detail-card p {
+        color: <?php echo htmlspecialchars($paletteTextPrimary); ?>;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
+    }
+    .kos-detail-card p strong {
+        color: <?php echo htmlspecialchars($paletteDarkBlue); ?>;
+    }
+
+    /* Price Styling */
+    .kos-price-display {
+        font-size: 1.5em;
+        color: <?php echo htmlspecialchars($paletteMediumBlue); ?>;
+        font-weight: bold;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        font-weight: 600;
+        padding: 0.35em 0.65em;
+        border-radius: 0.35rem;
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 5px;
+    }
+    .status-badge.bg-available { background-color: <?php echo htmlspecialchars($statusSuccess); ?>; color: <?php echo htmlspecialchars($paletteWhite); ?>; }
+    .status-badge.bg-booked { background-color: <?php echo htmlspecialchars($statusDanger); ?>; color: <?php echo htmlspecialchars($paletteWhite); ?>; }
+    .status-badge.bg-maintenance { background-color: <?php echo htmlspecialchars($statusWarning); ?>; color: <?php echo htmlspecialchars(adjustBrightness($statusWarning, -100)); ?>; } /* Darker text for yellow */
+
+    /* Action Buttons / Messages */
+    .btn-custom-cta {
+        display: inline-block;
+        padding: 12px 25px;
+        background-color: <?php echo htmlspecialchars($paletteMediumBlue); ?>;
+        color: <?php echo htmlspecialchars($paletteWhite); ?>;
+        text-decoration: none;
+        border-radius: 50px; /* Pill shape */
+        margin-top: 1.5rem;
+        font-size: 1.1em;
+        font-weight: 600;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .btn-custom-cta:hover {
+        background-color: <?php echo htmlspecialchars($paletteDarkBlue); ?>;
+        box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+
+    /* Info/Warning/Danger Messages */
+    .kos-message {
+        padding: 1rem 1.5rem;
+        border-radius: 5px;
+        margin-top: 1.5rem;
+        font-weight: 500;
+    }
+    .kos-message.info { background-color: <?php echo htmlspecialchars(adjustBrightness($statusInfo, 100)); ?>; color: <?php echo htmlspecialchars(adjustBrightness($statusInfo, -100)); ?>; border: 1px solid <?php echo htmlspecialchars($statusInfo); ?>; }
+    .kos-message.warning { background-color: <?php echo htmlspecialchars(adjustBrightness($statusWarning, 100)); ?>; color: <?php echo htmlspecialchars(adjustBrightness($statusWarning, -100)); ?>; border: 1px solid <?php echo htmlspecialchars($statusWarning); ?>; }
+    .kos-message.danger { background-color: <?php echo htmlspecialchars(adjustBrightness($statusDanger, 100)); ?>; color: <?php echo htmlspecialchars(adjustBrightness($statusDanger, -100)); ?>; border: 1px solid <?php echo htmlspecialchars($statusDanger); ?>; }
+
+
+    /* Back Link */
+    .back-link {
+        display: block;
+        margin-top: 2rem;
+        text-align: center;
+        color: <?php echo htmlspecialchars($paletteMediumBlue); ?>;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .back-link:hover {
+        color: <?php echo htmlspecialchars($paletteDarkBlue); ?>;
+        text-decoration: underline;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 767.98px) {
+        .kos-detail-card {
+            padding: 20px;
+        }
+        .kos-gallery {
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .kos-gallery img {
+            max-width: 150px;
+            height: 120px;
+            margin-right: 5px;
+            margin-left: 5px;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <h2 class="text-center"><?php echo htmlspecialchars($pageTitle ?? 'Detail Kos'); ?></h2>
+
+            <?php if (!empty($kos)): ?>
+                <div class="kos-detail-card">
+                    <div class="row g-3">
+                        <?php if (!empty($kos['gambar_kos']) && is_array($kos['gambar_kos'])): ?>
+                            <div class="col-12">
+                                <div class="kos-gallery d-flex flex-wrap justify-content-start">
+                                    <?php foreach ($kos['gambar_kos'] as $gambar): ?>
+                                        <img src="<?php echo htmlspecialchars($appConfig['UPLOADS_URL_PATH'] . $gambar['path']); ?>"
+                                            alt="<?php echo htmlspecialchars($gambar['nama_file']); ?>"
+                                            class="kos-gallery-img">
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php elseif (!empty($kos['gambar_utama'])): /* This case should theoretically not be hit if gambar_kos is populated */ ?>
+                            <div class="col-12">
+                                <img src="<?php echo htmlspecialchars($appConfig['ASSETS_URL'] . 'images/' . $kos['gambar_utama']); ?>"
+                                    alt="Gambar <?php echo htmlspecialchars($kos['nama_kos']); ?>"
+                                    class="kos-main-image">
+                            </div>
+                        <?php else: ?>
+                            <div class="col-12">
+                                <div class="kos-no-image" style="height: 250px;">
+                                    <span>Tidak ada gambar</span>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <div class="col-12">
+                            <h3><?php echo htmlspecialchars($kos['nama_kos']); ?></h3>
+                            <p><strong>Alamat:</strong> <?php echo htmlspecialchars($kos['alamat']); ?></p>
+                            <p class="kos-price-display">Harga: Rp <?php echo number_format($kos['harga_per_bulan'], 0, ',', '.'); ?> / bulan</p>
+                            
+                            <p>
+                                <strong>Status:</strong> 
+                                <?php
+                                    $status_kos_view = $kos['status_kos'] ?? 'maintenance';
+                                    $statusClass = '';
+                                    switch ($status_kos_view) {
+                                        case 'available': $statusClass = 'bg-success'; break;
+                                        case 'booked': $statusClass = 'bg-danger'; break;
+                                        case 'maintenance': $statusClass = 'bg-warning text-dark'; break;
+                                        default: $statusClass = 'bg-secondary'; break;
+                                    }
+                                ?>
+                                <span class="status-badge <?php echo $statusClass; ?>">
+                                    <?php echo ucfirst(htmlspecialchars($status_kos_view)); ?>
+                                </span>
+                            </p>
+                            <p>
+                                <strong>Kamar Tersedia:</strong> 
+                                <?php echo htmlspecialchars($kos['jumlah_kamar_tersedia'] ?? 0); ?> dari <?php echo htmlspecialchars($kos['jumlah_kamar_total'] ?? 0); ?> unit
+                            </p>
+                            
+                            <h4>Deskripsi:</h4>
+                            <p><?php echo nl2br(htmlspecialchars($kos['deskripsi'] ?? 'Tidak ada deskripsi.')); ?></p>
+                            
+                            <h4>Fasilitas:</h4>
+                            <p><?php echo htmlspecialchars($kos['fasilitas_kos'] ?? 'Tidak ada informasi fasilitas.'); ?></p>
+
+                            <?php if ($kos['status_kos'] === 'available' && ($kos['jumlah_kamar_tersedia'] ?? 0) > 0): ?>
+                                <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'booking/pesan/' . $kos['id']); ?>" 
+                                    class="btn-custom-cta">
+                                    Pesan Sekarang!
+                                </a>
+                            <?php elseif (($kos['jumlah_kamar_tersedia'] ?? 0) <= 0 || $kos['status_kos'] === 'booked'): ?>
+                                <p class="kos-message warning">
+                                    Semua kamar sudah terpesan atau kos penuh.
+                                </p>
+                            <?php else: ?>
+                                <p class="kos-message info">
+                                    Saat ini tidak tersedia untuk dipesan (<?php echo htmlspecialchars($kos['status_kos']); ?>).
+                                </p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <p class="alert alert-info text-center">Detail kos tidak ditemukan atau tidak valid.</p>
+            <?php endif; ?>
+
+            <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'kos/daftar'); ?>" class="back-link">
+                Kembali ke Daftar Kos
             </a>
-        <?php elseif (($kos['jumlah_kamar_tersedia'] ?? 0) <= 0 || $kos['status_kos'] === 'booked'): ?>
-            <p style="padding: 10px 15px; background-color: #ffe0b2; color: #856404; display: inline-block; border-radius: 5px; margin-top: 20px; border: 1px solid #ffc107;">
-                Semua kamar sudah terpesan atau kos penuh.
-            </p>
-        <?php else: // maintenance atau status lain ?>
-            <p style="padding: 10px 15px; background-color: #f8d7da; color: #721c24; display: inline-block; border-radius: 5px; margin-top: 20px; border: 1px solid #f5c6cb;">
-                Saat ini tidak tersedia untuk dipesan (<?php echo htmlspecialchars($kos['status_kos']); ?>).
-            </p>
-        <?php endif; ?>
+        </div>
     </div>
-<?php else: ?>
-    <p>Detail kos tidak ditemukan atau tidak valid.</p>
-<?php endif; ?>
-
-<p style="margin-top: 30px;">
-    <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'kos/daftar'); ?>">Kembali ke Daftar Kos</a>
-</p>
+</div>

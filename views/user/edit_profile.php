@@ -1,7 +1,6 @@
 <?php
 
-// Variabel $pageTitle, $appConfig, dan $user (berisi data pengguna) tersedia.
-// $user bisa berisi data dari DB (saat GET) atau data dari POST (jika ada error submit).
+
 ?>
 
 <h2><?php echo htmlspecialchars($pageTitle ?? 'Edit Profil'); ?></h2>

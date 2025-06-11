@@ -1,6 +1,5 @@
 <?php
-// Variabel $pageTitle, $appConfig, $namaAplikasi, $versi, dan $deskripsi
-// telah di-passing dari HomeController melalui BaseController::loadView().
+
 ?>
 
 <div class="page-header">
