@@ -28,6 +28,37 @@ $color_danger = '#dc3545';  // Red
 $color_info = '#17a2b8';    // Teal/Light Blue
 $color_muted = '#6c757d';   // Gray (for default status/placeholder)
 
+// Helper function (if not already globally defined) to adjust color brightness
+// You should ideally have this in a central helper file to avoid redeclaration.
+if (!function_exists('adjustBrightness')) {
+    function adjustBrightness($hex, $steps) {
+        $steps = max(-255, min(255, $steps));
+        $hex = str_replace('#', '', $hex);
+        $rgb = [];
+        if (strlen($hex) == 3) {
+            $rgb[0] = hexdec(str_repeat(substr($hex, 0, 1), 2));
+            $rgb[1] = hexdec(str_repeat(substr($hex, 1, 1), 2));
+            $rgb[2] = hexdec(str_repeat(substr($hex, 2, 1), 2));
+        } else {
+            $rgb[0] = hexdec(substr($hex, 0, 2));
+            $rgb[1] = hexdec(substr($hex, 2, 2));
+            $rgb[2] = hexdec(substr($hex, 4, 2));
+        }
+        $rgb[0] = max(0, min(255, $rgb[0] + $steps));
+        $rgb[1] = max(0, min(255, $rgb[1] + $steps));
+        $rgb[2] = max(0, min(255, $rgb[2] + $steps));
+        return '#' . str_pad(dechex($rgb[0]), 2, '0', STR_PAD_LEFT)
+                   . str_pad(dechex($rgb[1]), 2, '0', STR_PAD_LEFT)
+                   . str_pad(dechex($rgb[2]), 2, '0', STR_PAD_LEFT);
+    }
+}
+
+// Ensure $appConfig is available
+$appConfig = $appConfig ?? [
+    'BASE_URL' => '/',
+    'UPLOADS_URL_PATH' => 'uploads/'
+];
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -183,6 +214,85 @@ $color_muted = '#6c757d';   // Gray (for default status/placeholder)
                 width: 100%;
             }
         }
+
+        /* --- MODAL STYLES (for confirmation/rejection) --- */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1000; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            animation: fadeIn 0.3s ease-out; /* Add fade-in effect */
+        }
+
+        .modal-content {
+            background-color: <?php echo htmlspecialchars($palette_white); ?>;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .modal-content h3 {
+            color: <?php echo htmlspecialchars($color_primary_text_heading); ?>;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .modal-content p {
+            color: <?php echo htmlspecialchars($color_text_on_light); ?>;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-btn-confirm {
+            background-color: <?php echo htmlspecialchars($color_danger); ?>; /* Default to red for generic confirm */
+            color: <?php echo htmlspecialchars($palette_white); ?>;
+        }
+        .modal-btn-confirm.btn-success { /* For 'Konfirmasi' action */
+            background-color: <?php echo htmlspecialchars($color_success); ?>;
+        }
+
+        .modal-btn-cancel {
+            background-color: <?php echo htmlspecialchars($color_muted); ?>;
+            color: <?php echo htmlspecialchars($palette_white); ?>;
+        }
+
+        .modal-btn-confirm:hover {
+            opacity: 0.9;
+        }
+        .modal-btn-cancel:hover {
+            opacity: 0.9;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -269,18 +379,33 @@ $color_muted = '#6c757d';   // Gray (for default status/placeholder)
 
             <div class="actions-bar">
                 <?php if ($booking['status_pemesanan'] === 'pending'): ?>
-                    <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'admin/bookingConfirm/' . $booking['booking_id_val']); ?>"
-                       onclick="return confirm('Anda yakin ingin MENGONFIRMASI pesanan ini? Pastikan kamar masih tersedia dan pembayaran sudah valid.');"
-                       class="btn btn-primary">
+                    <a href="#"
+                       class="btn btn-primary open-booking-modal"
+                       data-action="confirm"
+                       data-url="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'admin/bookingConfirm/' . $booking['booking_id_val']); ?>"
+                       data-title="Konfirmasi Pesanan Ini"
+                       data-message="Anda yakin ingin MENGONFIRMASI pesanan ini? Pastikan kamar masih tersedia dan pembayaran sudah valid.">
                         Konfirmasi Pesanan Ini
                     </a>
-                    <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'admin/bookingReject/' . $booking['booking_id_val']); ?>"
-                       onclick="return confirm('Anda yakin ingin MENOLAK pesanan ini?');"
-                       class="btn btn-danger">
+                    <a href="#"
+                       class="btn btn-danger open-booking-modal"
+                       data-action="reject"
+                       data-url="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'admin/bookingReject/' . $booking['booking_id_val']); ?>"
+                       data-title="Tolak Pesanan Ini"
+                       data-message="Anda yakin ingin MENOLAK pesanan ini?">
                         Tolak Pesanan Ini
                     </a>
                 <?php elseif($booking['status_pemesanan'] === 'confirmed'): ?>
-                    <p>Pesanan ini sudah dikonfirmasi. <a href="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'admin/bookingReject/' . $booking['booking_id_val']); ?>" onclick="return confirm('Anda yakin ingin MEMBATALKAN (REJECT) pesanan yang sudah dikonfirmasi ini?');" class="link-danger">Batalkan Konfirmasi?</a></p>
+                    <p>Pesanan ini sudah dikonfirmasi.
+                        <a href="#"
+                           class="link-danger open-booking-modal"
+                           data-action="reject"
+                           data-url="<?php echo htmlspecialchars($appConfig['BASE_URL'] . 'admin/bookingReject/' . $booking['booking_id_val']); ?>"
+                           data-title="Batalkan Konfirmasi Pesanan Ini"
+                           data-message="Anda yakin ingin MEMBATALKAN (MENOLAK) pesanan yang sudah dikonfirmasi ini?">
+                            Batalkan Konfirmasi?
+                        </a>
+                    </p>
                 <?php else: ?>
                     <p>Status pesanan: <?php echo htmlspecialchars(ucfirst($booking['status_pemesanan'])); ?></p>
                 <?php endif; ?>
@@ -297,5 +422,83 @@ $color_muted = '#6c757d';   // Gray (for default status/placeholder)
             </div>
         <?php endif; ?>
     </div>
+
+    <div id="actionConfirmModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Konfirmasi Aksi</h3>
+            <p id="modalMessage">Apakah Anda yakin ingin melanjutkan aksi ini?</p>
+            <div class="modal-buttons">
+                <button id="modalConfirmBtn" class="modal-btn modal-btn-confirm">Ya</button>
+                <button id="modalCancelBtn" class="modal-btn modal-btn-cancel">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get modal elements
+        const modal = document.getElementById('actionConfirmModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+        // Select all links that should trigger the modal
+        const actionLinks = document.querySelectorAll('.open-booking-modal');
+
+        let currentActionUrl = ''; // Variable to store the URL that will be executed
+
+        actionLinks.forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent default link behavior (navigating immediately)
+
+                // Get data from the clicked link
+                const action = this.dataset.action; // 'confirm' or 'reject'
+                const url = this.dataset.url;
+                const title = this.dataset.title;
+                const message = this.dataset.message;
+
+                // Populate modal content
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                currentActionUrl = url; // Store the URL for later use
+
+                // Adjust confirm button style based on action
+                if (action === 'confirm') {
+                    modalConfirmBtn.classList.add('btn-success');
+                    modalConfirmBtn.classList.remove('btn-danger'); // Ensure red is removed if present
+                    modalConfirmBtn.textContent = 'Konfirmasi';
+                } else if (action === 'reject') {
+                    modalConfirmBtn.classList.add('btn-danger');
+                    modalConfirmBtn.classList.remove('btn-success'); // Ensure green is removed if present
+                    modalConfirmBtn.textContent = 'Tolak';
+                } else {
+                    // Default style if action is unknown or not set
+                    modalConfirmBtn.classList.remove('btn-success', 'btn-danger');
+                    modalConfirmBtn.textContent = 'Lanjutkan';
+                }
+
+                modal.style.display = 'flex'; // Show the modal
+            });
+        });
+
+        // Handle confirm button click inside the modal
+        modalConfirmBtn.addEventListener('click', function() {
+            if (currentActionUrl) {
+                window.location.href = currentActionUrl; // Redirect to perform the action
+            }
+        });
+
+        // Handle cancel button click inside the modal
+        modalCancelBtn.addEventListener('click', function() {
+            modal.style.display = 'none'; // Hide the modal
+        });
+
+        // Handle clicks on the modal background to close it
+        modal.addEventListener('click', function(event) {
+            if (event.target === modal) { // Check if the click is directly on the modal background
+                modal.style.display = 'none'; // Hide the modal
+            }
+        });
+    </script>
 </body>
 </html>
